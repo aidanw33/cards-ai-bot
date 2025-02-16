@@ -1,0 +1,29 @@
+from cards import Card
+
+class Deck:
+    def __init__(self):
+        # Creates and shuffles a double deck of cards
+        self.cards = [Card(rank, suit) for suit in Card.suits for rank in Card.ranks]
+        self.cards.extend([Card(rank, suit) for suit in Card.suits for rank in Card.ranks])
+        self.cards.extend([Card("Joker"), Card("Joker")])
+        self.cards.extend([Card("Joker"), Card("Joker")])
+        self.shuffle()
+
+        self.discard_pile = []
+
+
+    def shuffle(self):
+        import random
+        random.shuffle(self.cards)        
+
+    def discard(self, Card):
+        self.discard_pile.append(Card)
+    
+    def draw(self):
+        return self.cards.pop() if self.cards else IndexError("Run out of cards bud time to fix it.")
+    
+    def peak_discard_card(self):
+        return self.discard_pile[-1] if self.discard_pile else None
+    
+    def __str__(self):
+        return f"Cards in deck: {self.cards} \n Cards in discard, {self.discard_pile[-1]}"
