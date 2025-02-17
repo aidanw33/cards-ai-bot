@@ -4,6 +4,7 @@ from player import Player
 class Game:
     def __init__(self, player_names):
         self.deck = Deck()
+        self.actions = ["d"]
         
         # Must be 6 players per game
         if len(player_names) != 6 :
@@ -31,7 +32,17 @@ class Game:
         print(f"Hand: {player.show_hand()}")
         print(f"Discard card: {self.deck.peak_discard_card()}")
 
-        action = input("Action:")
+
+        #TODO: Need to have an action for others to choose if they are gonna buy but I will add that later.....
+
+        action = "unrealaction unrealcard"
+        while action.split()[0] not in self.actions :
+            action = input("Action:")
+        
+        if action.split()[0] == "d" :
+            card_to_discard = action.split()[1]
+
+        #TODO: Is action legal?    
 
         self.current_turn = (self.current_turn + 1) % len(self.players)
 
