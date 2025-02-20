@@ -21,6 +21,9 @@ class Deck:
     
     def draw(self):
         return self.cards.pop() if self.cards else IndexError("Run out of cards bud time to fix it.")
+
+    def draw_from_discard(self) :
+        return self.discard_pile.pop() if self.discard_pile else None
     
     def peak_discard_card(self):
         return self.discard_pile[-1] if self.discard_pile else None

@@ -1,5 +1,7 @@
 from deck import Deck
 from player import Player
+from cards import Card
+import game_control
 
 class Game:
     def __init__(self, player_names):
@@ -23,26 +25,41 @@ class Game:
         # Determine the current turn, start on player 0
         self.current_turn = 0
 
+    # Represents the game_flow of the game which can be broken down into a few different steps:
+    # 1) Identify which players turn it currently is
+    # 2) Give the opportunity for players to buy the current card/cards on the discard pile
+    # 3) Player either chooses to draw from the discard pile or draw from the top of the deck
+    # 4) Player is either down / or not down. Player makes choice to go down or not go down
+    # 5) If player is down, they can now choose to discard cards into other down piles(including their own)
+    # 6) Player ends their turn discarding one card into the discard piles
+    # 7) If the player has no cards in their hand at the end of the round they have won the game
+    def game_flow(self):
 
-    def next_turn(self):
+        # 1) Identify which players turn it currenlty is
+        current_player = self.players[self.current_turn]
 
-        player = self.players[self.current_turn]
-
-        print(f"\n{player.name}'s turn:")
-        print(f"Hand: {player.show_hand()}")
+        # Print output identifying who's turn it is
+        print(f"\n{current_player.name}'s turn:")
+        print(f"Hand: {current_player.get_hand()}")
         print(f"Discard card: {self.deck.peak_discard_card()}")
 
-
+        # 2) Give the opportunity for players to buy the current card/cards on the discard pile
         #TODO: Need to have an action for others to choose if they are gonna buy but I will add that later.....
-
-        action = "unrealaction unrealcard"
-        while action.split()[0] not in self.actions :
-            action = input("Action:")
         
-        if action.split()[0] == "d" :
-            card_to_discard = action.split()[1]
+        # 3) Player either chooses to draw from the discard pile or draw from the top of the deck
+        game_control.player_draws_card_for_turn(current_player, self.deck)
 
-        #TODO: Is action legal?    
+        # 4) Player is either down / or not down. Player makes choice to go down or not go down
+        #TODO: Implement this step
+
+        # 5) If player is down, they can now choose to discard cards into other down piles(including their own)
+        #TODO: Implement this step
+
+        # 6) Player ends their turn discarding one card into the discard piles
+        game_control.player_discards_card_into_discard_pile(current_player, self.deck)
+
+        # 7) If the player has no cards in their hand at the end of the round they have won the game
+        #TODO: Implement this step 
 
         self.current_turn = (self.current_turn + 1) % len(self.players)
 
@@ -51,7 +68,7 @@ class Game:
         start = input("Press enter to start game")
         
         # Begin the game
-        self.next_turn()
+        self.game_flow()
 
 
     def is_game_over(self):
@@ -64,6 +81,5 @@ class Game:
 # Example usage:
 game = Game(["Alice", "Bob", "Charlie", "David", "Eddie", "Fred"])
 game.start_game()
-print(game.players[0].show_hand())
 while not game.is_game_over():
     game.next_turn()
