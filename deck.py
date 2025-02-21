@@ -25,8 +25,14 @@ class Deck:
     def draw_from_discard(self) :
         return self.discard_pile.pop() if self.discard_pile else None
     
-    def peak_discard_card(self):
-        return self.discard_pile[-1] if self.discard_pile else None
+    def amount_in_discard(self) :
+        return len(self.discard_pile)
+    
+    def peak_discard_card(self, amount_to_peek):
+        if len(self.discard_pile) > amount_to_peek :
+            amount_to_peek = len(self.discard_pile)
+        return self.discard_pile[-amount_to_peek:][::-1]
+
     
     def __str__(self):
         return f"Cards in deck: {self.cards} \n Cards in discard, {self.discard_pile[-1]}"

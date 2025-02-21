@@ -41,11 +41,41 @@ class Game:
         # Print output identifying who's turn it is
         print(f"\n{current_player.name}'s turn:")
         print(f"Hand: {current_player.get_hand()}")
-        print(f"Discard card: {self.deck.peak_discard_card()}")
+        print(f"Discard card: {self.deck.peak_discard_card(1)}")
 
         # 2) Give the opportunity for players to buy the current card/cards on the discard pile
         #TODO: Need to have an action for others to choose if they are gonna buy but I will add that later.....
-        
+
+        # Define the order which players will get the opportunity to buy
+        buy_order = []
+        for i in range(1, 6) :
+            buy_order.append((i + self.current_turn) % 6)
+
+        # Give the opportunity for each player to buy if there are cards
+        for buyer_id in buy_order:
+            if self.deck.amount_in_discard() < 1 :
+                continue
+            buyer = self.players[buyer_id]
+            
+            # Show the player the cards available to buy
+            while True :
+                print(f"Discard card: {self.deck.peak_discard_card(3)}")
+                buy = input(f"Does player {buyer.get_player_name()} want to buy, and how many cards?")
+                
+                # Don't allow them to buy more cards then are available...
+                if buy[0] == 'b' :
+                    amount = int(buy[1])
+                    if amount > 0 and amount <= self.deck.amount_in_discard() :
+                        for i in range(0, amount) :
+                            buyer.draw_from_disc(self.deck)
+                        break
+                        
+                        
+
+
+
+            
+
         # 3) Player either chooses to draw from the discard pile or draw from the top of the deck
         game_control.player_draws_card_for_turn(current_player, self.deck)
 

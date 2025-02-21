@@ -8,8 +8,9 @@ def player_draws_card_for_turn(current_player, deck) :
 
     action = None
     while action != "deck" and action != "disc" :
+        
         action = input("Draw from deck or disc?: ")
-    
+
     if action == "deck" :
         current_player.draw_from_deck(deck)
     
@@ -25,7 +26,6 @@ def player_discards_card_into_discard_pile(current_player, deck) :
     while True: 
         
         card = input("Card to discard: ")
-
         if card == "jo" :
             suit = "Joker"
             rank = "Joker"
@@ -34,7 +34,6 @@ def player_discards_card_into_discard_pile(current_player, deck) :
             rank = Card.map_to_card_value(card[0])
 
         for handcard in current_player.get_hand() :
-            print(handcard.suit, handcard.rank)
             if handcard.rank == rank and handcard.suit == suit :
                 #this is the card we want to discard
                 current_player.card_into_discard(deck, handcard)

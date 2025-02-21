@@ -39,6 +39,9 @@ class Player:
     def get_is_player_down() :
         return self.isDown
     
+    def get_player_name(self) :
+        return self.name
+
     def set_is_player_down(is_player_down) :
         self.isDown = is_player_down
     
