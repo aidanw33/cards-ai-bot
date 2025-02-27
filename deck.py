@@ -28,6 +28,10 @@ class Deck:
     def amount_in_discard(self) :
         return len(self.discard_pile)
     
+    def amount_in_deck(self) :
+        return len(self.cards)
+    
+    # Peaks amount_to_peek unless there are less than amount_to_peek cards in the discard pile, in that case it peaks all the cards in the discard pile
     def peak_discard_card(self, amount_to_peek):
         if len(self.discard_pile) > amount_to_peek :
             amount_to_peek = len(self.discard_pile)
