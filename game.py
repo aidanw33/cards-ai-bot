@@ -50,6 +50,11 @@ class Game:
 
             # 4) Player is either down / or not down. Player makes choice to go down or not go down
             #TODO: Implement this step
+            if current_player.get_is_player_down() == False :
+                # Player can check if they can go down 
+                current_player.can_player_go_down(1)
+                
+                
 
             # 5) If player is down, they can now choose to discard cards into other down piles(including their own)
             #TODO: Implement this step

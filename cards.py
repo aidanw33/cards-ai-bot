@@ -32,7 +32,6 @@ class Card:
             'c': 'Clubs',
             's': 'Spades'
         }
-    
         return suit_mapping.get(char, 'Invalid suit')
 
     @staticmethod
