@@ -8,7 +8,26 @@ def fresh_data():
     p = Player("test_user", True)
     d = Deck()
     return p, d
-    
+
+def test_is_a_valid_card_test1() :
+    assert Card.is_a_valid_card("2h")
+
+def test_is_a_valid_card_test2() :
+    assert Card.is_a_valid_card("3d")
+
+def test_is_a_valid_card_test3() :
+    assert Card.is_a_valid_card("4c")
+
+def test_is_a_valid_card_test4() :
+    assert Card.is_a_valid_card("5s")
+
+def test_is_a_valid_card_test5() :
+    assert Card.is_a_valid_card("jo")
+
+def test_is_a_valid_card_test6() :
+    assert not Card.is_a_valid_card("2j")
+
+
 def test_can_player_go_down_round1_test1(fresh_data) :
     p, d = fresh_data
     c1 = Card("3", "Hearts")

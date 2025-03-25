@@ -8,6 +8,7 @@ class Player:
         self._isAI = isAI
         self._isDown = False
         self._buys_used = 0
+        self._downPile = []
 
     def draw(self, deck, num=1):
         for _ in range(num):
@@ -86,10 +87,99 @@ class Player:
             # Step 4: Return True if there are exactly 2 triplets, otherwise False
             return len(triplet_counts) >= 2
 
+    def can_player_go_down_with_cards(self, cards, round_number) :
+        
+        # Map the cards in the array to the actual cards in the players hand
+        accessed_index = [] # Need the accessed index to make sure we do not count the same card twice for a duplicate card in a players hand
+        player_cards = []
+        for card in cards:
+            if card == "jo" :
+                suit = "Joker"
+                rank = "Joker"
+            else :
+                suit = Card.map_to_suit(card[1])
+                rank = Card.map_to_card_value(card[0])
+
+            for handcard in self._hand :
+                if handcard.rank == rank and handcard.suit == suit :
+                    if self._hand.index(handcard) in accessed_index :
+                        continue
+                    player_cards.append(handcard)
+                    accessed_index.append(self._hand.index(handcard))
+
+
+        # Round 1 involves two sets of 3 cards, a.k.a two sets of 3 of a kind
+        if round_number == 1 :
+            # Step 1: Count the frequency of each rank, and the number of jokers
+            rank_counts = Counter(card.rank for card in player_cards if card.rank != 'Joker')
+            joker_count = sum(1 for card in player_cards if card.rank == 'Joker')
             
+            # Step 2: Check how many ranks have exactly 3 cards (or can form a triplet with jokers)
+            triplet_counts = [count for count in rank_counts.values() if count == 3]
+
+            # Step 3: Try to form triplets using jokers
+            for rank, count in rank_counts.items():
+                if count == 2 and joker_count > 0:
+                    triplet_counts.append(rank)  # Form a triplet using 1 joker
+                    joker_count -= 1
+                elif count == 1 and joker_count >= 2:
+                    triplet_counts.append(rank)  # Form a triplet using 2 jokers
+                    joker_count -= 2
+                elif count == 0 and joker_count >= 3:
+                    triplet_counts.append(rank)
+                    joker_count -= 3
+            
+            # Step 4: Return True if there are exactly 2 triplets, otherwise False
+            return len(triplet_counts) >= 2
+        
+    # Checks to see if a card given in format({rank}{suite}{count(amount of times that card is in player's hand)}) is in the players hand
+    def is_card_in_player_hand_count(self, card) :
+        if card == "jo" :
+            suit = "Joker"
+            rank = "Joker"
+            count = int(card[2])
+        else :
+            suit = Card.map_to_suit(card[1])
+            rank = Card.map_to_card_value(card[0])
+            count = int(card[2])
+
+        actual_count = 0
+        for handcard in self._hand() :
+            if handcard.rank == rank and handcard.suit == suit :
+                actual_count += 1
+        
+        return actual_count == count
+    
+    # Checks to see if a card given in format({rank}{suit}) is in the player's hand
+    # Returns whether the card is in the player's hand or not, and then the card if it is in the player's hand, else None
+    def is_card_in_player_hand(self, card):
+        if card == "jo":
+            suit = "Joker"
+            rank = "Joker"
+        else:
+            suit = Card.map_to_suit(card[1])
+            rank = Card.map_to_card_value(card[0])
+
+        # Loop through the hand to see if the card is present
+        for handcard in self._hand():
+            if handcard.rank == rank and handcard.suit == suit:
+                return True, handcard
+        return False, None
+    
+    # Add card to the down pile
+    def add_card_to_down_pile(self, card):
+        valid_card, card = self.is_card_in_player_hand(card)
+        if valid_card: 
+            self._hand.remove(card)
+            self._downPile.append(card)
+        else:
+            raise ValueError("Card is not in players hand, can not add to down pile!")
+
+
+        self._downPile.append(card)
 
     ### GETTERS ###
-    def get_is_player_down() :
+    def get_is_player_down(self) :
         return self._isDown
         
     def get_hand(self):
@@ -100,14 +190,19 @@ class Player:
 
     def get_buys_used(self) :
         return self._buys_used
+    
+    def get_down_pile(self) :
+        return self._downPile
 
     ### SETTERS ###
 
     def set_buys_used(self, buys_used) :
         self._buys_used = buys_used
     
-    def set_is_player_down(is_player_down) :
+    def set_is_player_down(self, is_player_down) :
         self._isDown = is_player_down
     
     def get_isAI(self):
         return self._isAI
+    
+    

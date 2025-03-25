@@ -2,6 +2,7 @@ from deck import Deck
 from player import Player
 from cards import Card
 import game_control
+from collections import Counter
 
 class Game:
     def __init__(self, player_names):
@@ -48,12 +49,8 @@ class Game:
             # 2) Give the opportunity for players to buy the current card/cards on the discard pile if current player doesn't want discard buy
             game_control.player_draws_card_for_turn(current_player, self.deck, self.players, self.current_turn)
 
-            # 4) Player is either down / or not down. Player makes choice to go down or not go down
-            #TODO: Implement this step
-            if current_player.get_is_player_down() == False :
-                # Player can check if they can go down 
-                current_player.can_player_go_down(1)
-                
+            # 4) Player is either down / or not down. Player makes choice to go down or not go down, must state which cards they are going down with
+            game_control.player_decides_to_go_down_or_not(current_player)
                 
 
             # 5) If player is down, they can now choose to discard cards into other down piles(including their own)

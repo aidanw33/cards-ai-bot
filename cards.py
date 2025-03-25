@@ -42,3 +42,15 @@ class Card:
         }
         
         return value_mapping.get(char, 'Invalid card value')
+    
+    # Verifies whether a two character string is a valid card or not, True if it does correctly map to a card, False otherwise
+    @staticmethod
+    def is_a_valid_card(card):
+        if len(card) != 2:
+            return False
+        if card == "jo":
+            return True
+        if card[0] in "23456789tjqka" and card[1] in "hdcs":
+            return True
+        else :
+            return False
