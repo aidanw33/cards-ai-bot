@@ -161,7 +161,7 @@ class Player:
             rank = Card.map_to_card_value(card[0])
 
         # Loop through the hand to see if the card is present
-        for handcard in self._hand():
+        for handcard in self._hand:
             if handcard.rank == rank and handcard.suit == suit:
                 return True, handcard
         return False, None
@@ -175,8 +175,6 @@ class Player:
         else:
             raise ValueError("Card is not in players hand, can not add to down pile!")
 
-
-        self._downPile.append(card)
 
     ### GETTERS ###
     def get_is_player_down(self) :

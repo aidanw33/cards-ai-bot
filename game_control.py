@@ -3,6 +3,7 @@ from player import Player
 from cards import Card
 import re
 from collections import Counter
+import rules
 
 # Controls the beginning of the turn for a player, they either choose to draw from the deck or the discard pile
 # If the player chooses to draw from the discard pile, this step is complete
@@ -78,19 +79,44 @@ def player_discards_card_into_discard_pile(current_player, deck) :
 
 def player_decides_to_go_down_or_not(current_player) :
 
-    if current_player.get_is_player_down() == False :
-        # Player can check if they can go down 
-        can_be_down = current_player.can_player_go_down(1)
 
-        if can_be_down :
-            going_down = " "
+    # Identify if the current player is down
+    if current_player.get_is_player_down() == False :
+
+
+        # If the current player isn't down, check whether or not they have the cards to be down
+        can_be_down = rules.can_player_go_down(current_player, 1)
+
+        # Print whether a player can go down or not
+        if not can_be_down :
+            print("Cards in your hand are not eligible to go down with")
+        else : 
+            going_down = ""
             while going_down != "y" and going_down != "n" :
                 going_down = input("Do you want to go down? (y/n)")
-            if going_down == "y" :
+
+
+            # If player wants to go down, they can, if they do not want to go down continue
+            if going_down == "n" :
+                pass
+            else :  
+
+                # Player wants to go down, they can now choose which 6 cards they want to go down with
                 while True :
                     cards_going_down = input("Which cards are you going down with?(card1 card2 card3 card4 card5 card6)/exit")
                     if cards_going_down == "exit" :
+                        print("Exiting go down phase, you will not go down")
                         break
+                    
+                    valid_cards, valid_cards_list = rules.valid_cards_to_go_down_with(current_player, cards_going_down, 1) 
+                    if valid_cards :
+                        for card in valid_cards_list :
+                            current_player.add_card_to_down_pile(card)
+                        current_player.set_is_player_down(True)
+                        break
+                    else :
+                        print("Invalid cards, retry input")
+                        continue
 
                     # Make sure there are 6 cards to go down with
                     cards_going_down = cards_going_down.split()
@@ -104,7 +130,7 @@ def player_decides_to_go_down_or_not(current_player) :
                         continue
                     
                     # Check if the cards in the hand are eligible to go down with
-                    if not current_player.can_player_go_down_with_cards(cards_going_down) :
+                    if not current_player.can_player_go_down_with_cards(cards_going_down, 1) :
                         print("The cards you entered are not eligible to go down with, retry input")
                         continue
 
@@ -130,6 +156,3 @@ def player_decides_to_go_down_or_not(current_player) :
                             current_player.add_card_to_down_pile(card)
                         current_player.set_is_player_down(True)
                         break
-            if going_down == "n" :
-                # If the player is not going down we can just continue
-                pass
