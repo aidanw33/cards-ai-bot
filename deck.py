@@ -1,4 +1,5 @@
 from cards import Card
+import random
 
 class Deck:
     def __init__(self):
@@ -13,7 +14,6 @@ class Deck:
 
 
     def shuffle(self):
-        import random
         random.shuffle(self.cards)        
 
     def discard(self, Card):
@@ -23,7 +23,7 @@ class Deck:
         return self.cards.pop() if self.cards else IndexError("Run out of cards bud time to fix it.")
 
     def draw_from_discard(self) :
-        return self.discard_pile.pop() if self.discard_pile else None
+        return self.discard_pile.pop() if self.discard_pile else IndexError("Run out of cards bud time to fix it.")
     
     def amount_in_discard(self) :
         return len(self.discard_pile)
