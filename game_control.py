@@ -77,6 +77,79 @@ def player_discards_card_into_discard_pile(current_player, deck) :
                 print(current_player.get_hand(), "hand after discard of ", handcard)
                 return
 
+
+def player_discards_into_down_piles(current_player, players, round_number) :
+
+    # Check if the player is down
+    if current_player.get_is_player_down() == False :
+        return
+    
+    # Check the number of cards in our hand, we cannot discard into other hands with less than 2 cards
+    if len(current_player.get_hand()) < 2 :
+
+        print("You cannot discard into other down piles with less than 2 cards in your hand")
+        return
+    
+    # If we are down, and have cards to discard, we can now choose to discard into other down piles
+    if round_number == 1 :
+        
+        # Find the eligible ranks to discard into
+        eligible_ranks = {}
+        for player in players :
+            if player.get_is_player_down() == True :
+                for card in player.get_down_pile() :
+                    if card.rank not in eligible_ranks :
+                        eligible_ranks[card.rank] = [player]
+                    else :
+                        eligible_ranks[card.rank].append(player)
+        
+        # Print the eligible ranks to discard into
+        print("Eligible ranks to discard into:", eligible_ranks.keys())
+
+        # Choose which cards to discard
+        while True :
+            cards_to_down_piles = input("Which cards are you discarding into other down piles?(card1 card2 ....)/exit")
+            if cards_to_down_piles == "exit" :
+                print("Exiting discard into other down piles phase")
+                break
+            
+            # Parse the cards as a string of inputs, verify that there are 2 cards
+            cards_to_down_piles = cards_to_down_piles.split()
+            if len(cards_to_down_piles) >= len(current_player.get_hand()) :
+                print("You cannot discard more than 1 less than the amount of cards in your hand, retry input")
+                continue
+            
+            # Check if the cards are valid cards
+            if not all(Card.is_a_valid_card(card_to_down_piles) for card_to_down_piles in cards_to_down_piles) :
+                print("One of the cards you entered is not a valid card, retry input")
+                continue
+            
+            # Verify that the cards are in the players hand, create a list of such cards
+            for card_to_down_piles in cards_to_down_piles:
+                is_card_in_hand, hcard = current_player.is_card_in_player_hand(card_to_down_piles)
+                if is_card_in_hand == False :
+                    print(f"{card_to_down_piles} is not in your hand, retry input")
+                    continue
+
+            # Check if the cards are eligible to discard into other down piles
+            if not all(card_to_discard.rank in eligible_ranks for card_to_discard in cards_to_down_piles) :
+                print("One of the cards you entered is not eligible to discard into other down piles, retry input")
+                continue
+            
+            # Remove the cards from the players hand
+            for card_to_down_piles in cards_to_down_piles :
+                # Get the card in the players hand
+                is_card_in_hand, hcard = current_player.is_card_in_player_hand(card_to_down_piles)
+
+                if is_card_in_hand :
+                    # Remove the card from the players hand
+                    current_player.remove_card_from_hand(hcard)
+
+                    # Discard the card into a random discard pile of an opponent
+                    eligible_ranks[hcard.rank][0].add_card_to_down_pile_from_opponent(hcard)
+            
+            break
+
 def player_decides_to_go_down_or_not(current_player) :
 
 

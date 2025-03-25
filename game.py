@@ -54,13 +54,15 @@ class Game:
                 
 
             # 5) If player is down, they can now choose to discard cards into other down piles(including their own)
-            #TODO: Implement this step
+            game_control.player_discards_into_down_piles(current_player, self.players, 1)
 
             # 6) Player ends their turn discarding one card into the discard piles
             game_control.player_discards_card_into_discard_pile(current_player, self.deck)
 
             # 7) If the player has no cards in their hand at the end of the round they have won the game
-            #TODO: Implement this step 
+            if len(current_player.get_hand()) == 0:
+                print(f"{current_player.get_player_name()} has won the game!")
+                break
 
             self.current_turn = (self.current_turn + 1) % len(self.players)
 

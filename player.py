@@ -31,6 +31,11 @@ class Player:
         new_card = deck.draw_from_discard() 
         self._hand.append(new_card)
     
+    # Removes card from players hand
+    def remove_card_from_hand(self, card):
+        self._hand.remove(card)
+    
+
     # This method will attempt to buy the 'amount' of cards from the discard pile
     # If the player does not have enough buys, it will throw an error
     # If there are not enough cards in the discard pile, it will throw an error
@@ -174,6 +179,10 @@ class Player:
             self._downPile.append(card)
         else:
             raise ValueError("Card is not in players hand, can not add to down pile!")
+
+    # Add card to the down pile from the opponent
+    def add_card_to_down_pile_from_opponent(self, card) :
+        self._downPile.append(card)
 
 
     ### GETTERS ###
