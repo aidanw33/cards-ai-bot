@@ -35,7 +35,23 @@ class Player:
     def remove_card_from_hand(self, card):
         self._hand.remove(card)
     
+    # Get the one hot encoding for a players hand
+    def get_encoding_hand(self) :
+        encoding = [0] * 108
+        for card in self._hand :
+            _, index = Card.map_to_encoding(card)
+            encoding[index] = 1
 
+        return encoding
+
+    def get_encoding_down_pile(self) :
+        encoding = [0] * 108
+        for card in self._downPile :
+            _, index = Card.map_to_encoding(card)
+            encoding[index] = 1
+
+        return encoding
+            
     # This method will attempt to buy the 'amount' of cards from the discard pile
     # If the player does not have enough buys, it will throw an error
     # If there are not enough cards in the discard pile, it will throw an error
