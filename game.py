@@ -3,10 +3,9 @@ from player import Player
 from cards import Card
 import game_control
 from collections import Counter
-import tkinter as tk
 import threading
-from gui1 import CardGameGUI
 import time
+import gui
 
 class Game:
     def __init__(self, player_names):
@@ -114,13 +113,11 @@ class Game:
         
         start = input("Press enter to start game")
         
-        #Start up the GUI
-        gui_thread = threading.Thread(target=self.run_gui)
-        gui_thread.start()
-        
-        time.sleep(.5)
+        gui.open_game_window()
         game_state = self.get_game_state()
-        self.gui.update_image_vectors(game_state["player_encodings_hand"])
+
+        gui.set_images(game_state["player_encodings_hand"], game_state["TWOd_matrix_encoding_discard_pile"])
+
         # Begin the game
         self.game_flow()
         
@@ -129,10 +126,6 @@ class Game:
         # Define game-ending condition
         return False  
 
-    def run_gui(self):
-        root = tk.Tk()
-        self.gui = CardGameGUI(root)
-        self.gui.run()
         
 
 # Example usage:
