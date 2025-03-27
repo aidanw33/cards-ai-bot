@@ -9,7 +9,7 @@ discard_pile_spacing = 0.05
 draw_pile_size = .1
 
 def open_game_window():
-    global fig, ax, img_artists, image_filenames, discard_pile_images
+    global fig, ax, img_artists, image_filenames, discard_pile_images, discard_pile_artists
     
     # Define the number of sections and columns
     global num_sections, num_columns
@@ -22,13 +22,17 @@ def open_game_window():
 
     # Create figure and axis
     fig, ax = plt.subplots(figsize=(12, 6))  # Adjust width to make space for draw and discard piles
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_frame_on(False)
-    
-        # Define section widths and heights
-    width = 1 / num_columns  # Width of each card image
-    height = 1 / num_sections  # Height of each card section
+    ax.set_xticks([])  # Remove ticks
+    ax.set_yticks([])  # Remove ticks
+    ax.set_frame_on(False)  # Remove the frame
+
+    # Stretch the content to the edges
+    ax.set_xlim(0, 1)  # Set x-axis limits to stretch content to the full width
+    ax.set_ylim(0, 1)  # Set y-axis limits to stretch content to the full height
+
+    # Define section widths and heights based on axis limits
+    width = 1 / num_columns  # Width of each card image (now scaled to fit the full width)
+    height = 1 / num_sections  # Height of each card section (now scaled to fit the full height)
 
     # Draw sections with image tiles
     img_artists = []
@@ -47,10 +51,6 @@ def open_game_window():
             row.append(img)
         img_artists.append(row)
 
-        
-        # Label each section
-        ax.text(0.5, (i + 0.5) * height, f"Hand {i+1}", ha='center', va='center', fontsize=12, color='black', weight='bold')
-    
     # Draw pile (single image to the right)
     draw_pile_x = 1.05  # Position slightly outside the main sections
     draw_pile_y = 0.75  # Adjust height position
@@ -59,24 +59,29 @@ def open_game_window():
     ax.imshow(draw_pile_image, extent=[draw_pile_x, draw_pile_x + draw_pile_size, draw_pile_y, draw_pile_y + draw_pile_size])
     ax.text(draw_pile_x + draw_pile_size / 2, draw_pile_y - 0.05, "Draw Pile", ha='center', va='center', fontsize=10, color='black')
     
-    # Discard pile (three stacked images to the right)
+    # Discard pile (three stacked images to the right, now stored as artists)
     discard_pile_x = 1.05
     discard_pile_y_start = 0.4
     discard_pile_spacing = 0.05
-    #discard_pile_images = ["discard_pile_1.png", "discard_pile_2.png", "discard_pile_3.png"]
+    discard_pile_artists = []  # Clear the artists list before populating
     for i, discard_image in enumerate(discard_pile_images):
         img = load_image(discard_image)
-        ax.imshow(img, extent=[discard_pile_x, discard_pile_x + draw_pile_size, discard_pile_y_start - i * discard_pile_spacing, discard_pile_y_start + draw_pile_size - i * discard_pile_spacing])
+        discard_artist = ax.imshow(img, extent=[discard_pile_x, discard_pile_x + draw_pile_size, 
+                                               discard_pile_y_start - i * discard_pile_spacing, 
+                                               discard_pile_y_start + draw_pile_size - i * discard_pile_spacing])
+        discard_pile_artists.append(discard_artist)  # Store the artist
+        
     ax.text(discard_pile_x + draw_pile_size / 2, discard_pile_y_start - 3 * discard_pile_spacing - 0.05, "Discard Pile", ha='center', va='center', fontsize=10, color='black')
     
     # Set limits
-    ax.set_xlim(0, 1.2)  # Extend x limit to fit piles
+    ax.set_xlim(0, 1.2)  # Extend x limit to fit piles (you can adjust this for more space)
     ax.set_ylim(0, 1)
-    
+
     # Show plot
     plt.ion()
     plt.tight_layout()
     plt.show()
+
 
 def load_image(filename):
     try:
@@ -167,12 +172,10 @@ def update_plot():
             image = load_image(image_filenames[i][j])
             img_artists[i][j].set_data(image)
     
-    # Update the discard pile images
+    # Update the discard pile images (using set_data)
     for i, discard_image in enumerate(discard_pile_images):
-        img = load_image(discard_image)
-        ax.imshow(img, extent=[discard_pile_x, discard_pile_x + draw_pile_size, 
-                               discard_pile_y_start - i * discard_pile_spacing, 
-                               discard_pile_y_start + draw_pile_size - i * discard_pile_spacing])
-
+        if i < 3 :
+            img = load_image(discard_image)
+            discard_pile_artists[i].set_data(img)  # Update discard pile images
     
     plt.draw()

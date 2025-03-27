@@ -39,7 +39,7 @@ class Game:
         game_state["linear_encoding_discard_pile"] = linear_encoding_discard_pile
 
         # Get the 2d matrix encoding for the discard pile for X cards DECK
-        TWOd_matrix_encoding_discard_pile = self.deck.get_matrix_encoding_discard_pile(5)
+        TWOd_matrix_encoding_discard_pile = self.deck.get_matrix_encoding_discard_pile(3)
         game_state["TWOd_matrix_encoding_discard_pile"] = TWOd_matrix_encoding_discard_pile
 
         # Get the one hot encoding for all cards in the draw pile DECK
@@ -63,6 +63,9 @@ class Game:
         # Get the one hot encoding for cards we have seen GAME 
 
         # Get the one hot encoding for all cards the an agent can see is in another players hands, public hand GAME
+
+        # Get the turn of the current player
+        game_state["current_player_turn"] = self.current_turn
 
         return game_state
 
