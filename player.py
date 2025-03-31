@@ -76,7 +76,7 @@ class Player:
             if card_to_discard == card :
                 deck_to_discard.discard(card_to_discard)
                 self._hand.remove(card)
-                print("discarding")
+                print(f"discarding {card_to_discard}")
                 return
         
         raise ValueError("Card is not in players hand, can not discard!")
@@ -189,8 +189,8 @@ class Player:
     
     # Add card to the down pile
     def add_card_to_down_pile(self, card):
-        valid_card, card = self.is_card_in_player_hand(card)
-        if valid_card: 
+        # valid_card, card = self.is_card_in_player_hand(card)
+        if card in self._hand:
             self._hand.remove(card)
             self._downPile.append(card)
         else:
@@ -200,6 +200,13 @@ class Player:
     def add_card_to_down_pile_from_opponent(self, card) :
         self._downPile.append(card)
 
+    # Returns the rank of all the cards in the down pile
+    def get_ranks_in_down_pile(self) :
+        ranks = set()
+        for card in self._downPile :
+            if card.rank not in ranks :
+                ranks.add(card.rank)
+        return ranks
 
     ### GETTERS ###
     def get_is_player_down(self) :

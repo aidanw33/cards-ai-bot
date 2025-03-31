@@ -6,6 +6,7 @@ from collections import Counter
 import threading
 import time
 import gui
+import sys
 
 class Game:
     def __init__(self, player_names):
@@ -14,8 +15,10 @@ class Game:
         self.gui = None
 
         # Must be 6 players per game
+        '''
         if len(player_names) != 6 :
-            raise ValueError("There must be exactly six players per game")
+            raise ValueError("There must be exactly six players per game")'
+        '''
         
         # Edit here if players can be AI
         self.players = [Player(name, False) for name in player_names] 
@@ -67,6 +70,11 @@ class Game:
         # Get the turn of the current player
         game_state["current_player_turn"] = self.current_turn
 
+        # Get the players amount of buys left
+        game_state["buys_used"] = []
+        for player in self.players :
+            game_state["buys_used"].append(player.get_buys_used())
+
         return game_state
 
     # Represents the game_flow of the game which can be broken down into a few different steps:
@@ -90,17 +98,19 @@ class Game:
 
 
             # 2) Give the opportunity for players to buy the current card/cards on the discard pile if current player doesn't want discard buy
-            game_control.player_draws_card_for_turn(current_player, self.deck, self.players, self.current_turn)
+            game_control.player_draws_card_for_turn(current_player, self.deck, self.players, self.current_turn, self.get_game_state())
 
             # 4) Player is either down / or not down. Player makes choice to go down or not go down, must state which cards they are going down with
             game_control.player_decides_to_go_down_or_not(current_player)
                 
 
             # 5) If player is down, they can now choose to discard cards into other down piles(including their own)
-            game_control.player_discards_into_down_piles(current_player, self.players, 1)
+            game_control.agent_discards_card_into_discard_pile(current_player, self.players, 1)
+            
+            # Removing this choice for the beginning learning algo
 
             # 6) Player ends their turn discarding one card into the discard piles
-            game_control.player_discards_card_into_discard_pile(current_player, self.deck)
+            game_control.agent_player_discards_card_into_discard_pile(current_player, self.get_game_state(), self.deck)
 
             # 7) If the player has no cards in their hand at the end of the round they have won the game
             if len(current_player.get_hand()) == 0:
@@ -112,14 +122,15 @@ class Game:
 
 
 
-    def start_game(self, starting_cards=5):
+    def start_game(self):
         
-        start = input("Press enter to start game")
+        input("Press enter to start game")
         
-        gui.open_game_window()
-        game_state = self.get_game_state()
 
-        gui.set_images(game_state["player_encodings_hand"], game_state["TWOd_matrix_encoding_discard_pile"])
+        #gui.open_game_window()
+        #game_state = self.get_game_state()
+
+        #gui.set_images(game_state["player_encodings_hand"], game_state["TWOd_matrix_encoding_discard_pile"])
 
         # Begin the game
         self.game_flow()
@@ -129,11 +140,9 @@ class Game:
         # Define game-ending condition
         return False  
 
-        
 
-# Example usage:
-game = Game(["Alice", "Bob", "Charlie", "David", "Eddie", "Fred"])
 
+# Start the game with Two players
+game = Game(["Alice", "Bob"])
 game.start_game()
-while not game.is_game_over():
-    game.next_turn()
+
