@@ -210,6 +210,28 @@ def player_discards_into_down_piles(current_player, players, round_number) :
             
             break
 
+def calculate_player_scores(players) :
+
+    # Calculate the player scores and return a dictionary of the scores of each player
+    player_scores = {}
+
+    five_point_cards = set(["2", "3", "4","5", "6", "7"])
+    ten_point_cards = set(["8", "9", "10", "Jack", "Queen", "King"])
+    twenty_point_cards = set(["Ace", "Joker"])
+
+    for i, player in enumerate(players) :
+        player_score = 0
+        for card in player.get_hand() :
+            if card.rank in five_point_cards :
+                player_score -= 5
+            elif card.rank in ten_point_cards :
+                player_score -= 10
+            elif card.rank in twenty_point_cards :
+                player_score -= 20
+        player_scores[i] = player_score
+    
+    return player_scores
+
 def player_goes_down_or_not(current_player) :
     # Identify if the current player is down
     if current_player.get_is_player_down() == True :

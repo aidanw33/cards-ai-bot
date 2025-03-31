@@ -115,6 +115,9 @@ class Game:
             # 7) If the player has no cards in their hand at the end of the round they have won the game
             if len(current_player.get_hand()) == 0:
                 print(f"{current_player.get_player_name()} has won the game!")
+
+                print(game_control.calculate_player_scores(self.players))
+
                 break
 
             self.current_turn = (self.current_turn + 1) % len(self.players)
