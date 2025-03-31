@@ -27,14 +27,24 @@ env = CardGameEnv()
 q_net = QNetwork()
 target_net = QNetwork()
 target_net.load_state_dict(q_net.state_dict())
-optimizer = optim.Adam(q_net.parameters(), lr=0.001)
+optimizer = optim.Adam(q_net.parameters(), lr=0.01)
 replay_buffer = deque(maxlen=10000)
 epsilon = 1.0
 gamma = 0.99
 batch_size = 64
-num_episodes = 10000 
+num_episodes = 100000 
 
 rewards_per_episode = []
+
+# Set up live plotting
+plt.ion()
+fig, ax = plt.subplots()
+x_data, y_data = [], []
+line, = ax.plot(x_data, y_data, marker='o', linestyle='-')
+ax.set_xlabel("Episode")
+ax.set_ylabel("Average Reward (per 100 episodes)")
+ax.set_title("Training Performance")
+ax.grid()
 
 # Training loop
 for episode in range(num_episodes):
@@ -80,20 +90,22 @@ for episode in range(num_episodes):
     rewards_per_episode.append(total_reward)  # Store episode reward
     epsilon = max(0.01, epsilon * 0.995)  # Decay epsilon
     
-    if episode % 10 == 0:
+    if episode % 100 == 0:
         target_net.load_state_dict(q_net.state_dict())  # Update target net
+        
+        # Compute moving average and update plot
+        window_size = 100
+        avg_reward = np.mean(rewards_per_episode[-window_size:])
+        x_data.append(episode)
+        y_data.append(avg_reward)
+        line.set_xdata(x_data)
+        line.set_ydata(y_data)
+        ax.relim()
+        ax.autoscale_view()
+        plt.draw()
+        plt.pause(0.01)
     
     print(f"Episode {episode}, Total Reward: {total_reward}, Epsilon: {epsilon:.3f}")
 
-# Compute moving average of rewards
-window_size = 10
-average_rewards = [np.mean(rewards_per_episode[i:i + window_size]) 
-                   for i in range(0, len(rewards_per_episode), window_size)]
-
-# Plot the average reward per 10 episodes
-plt.plot(range(0, num_episodes, window_size), average_rewards, marker='o', linestyle='-')
-plt.xlabel("Episode")
-plt.ylabel("Average Reward (per 10 episodes)")
-plt.title("Training Performance")
-plt.grid()
+plt.ioff()
 plt.show()
