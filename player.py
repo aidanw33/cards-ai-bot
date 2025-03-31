@@ -19,8 +19,9 @@ class Player:
     # Draws card from deck and puts it into the players hand, now throw errors if there are no cards left in the deck
     def draw_from_deck(self, deck) :
         if deck.amount_in_deck() < 1 :
+            deck.reset_deck()
             #TODO: Implement shuffling of discard pile into deck
-            raise ValueError("There are no cards in the deck to draw from!")
+            #raise ValueError("There are no cards in the deck to draw from!")
         new_card = deck.draw()
         self._hand.append(new_card)
 
@@ -204,7 +205,7 @@ class Player:
     def get_ranks_in_down_pile(self) :
         ranks = set()
         for card in self._downPile :
-            if card.rank not in ranks :
+            if card.rank not in ranks and card.rank != "Joker" :
                 ranks.add(card.rank)
         return ranks
 

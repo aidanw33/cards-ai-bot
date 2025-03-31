@@ -9,10 +9,9 @@ from agent import Agent
 # Controls the beginning of the turn for a player, they either choose to draw from the deck or the discard pile
 # If the player chooses to draw from the discard pile, this step is complete
 # If the player chooses to draw from the deck, they give the table the opportunity to buy the card/cards on the discard pile
-def player_draws_card_for_turn(current_player, deck, players, current_turn, game_state) :
+def player_draws_card_for_turn(current_player, deck, players, current_turn, game_state, action) :
 
-    action = None
-
+    
     # Action for playier, agent will be given game state to decide whether to draw from the deck or discard pile
     # Input will be the game state, output will be either 0 or 1 which maps to deck or discard pile
     
@@ -22,8 +21,9 @@ def player_draws_card_for_turn(current_player, deck, players, current_turn, game
 
     if action == "deck" :
     '''
-    # Either returns 0 or 1 to draw from deck or discard pile
-    action = Agent.dumb_deck_or_disc(game_state)
+    # Only choose a random choice if we are the second player, otherwise it's being fed via AI
+    if current_turn == 1: 
+        action = Agent.dumb_deck_or_disc(game_state)
 
     if action == 1 :
         
@@ -213,7 +213,7 @@ def player_discards_into_down_piles(current_player, players, round_number) :
 def calculate_player_scores(players) :
 
     # Calculate the player scores and return a dictionary of the scores of each player
-    player_scores = {}
+    player_scores = [0] * len(players)
 
     five_point_cards = set(["2", "3", "4","5", "6", "7"])
     ten_point_cards = set(["8", "9", "10", "Jack", "Queen", "King"])
@@ -229,7 +229,6 @@ def calculate_player_scores(players) :
             elif card.rank in twenty_point_cards :
                 player_score -= 20
         player_scores[i] = player_score
-    
     return player_scores
 
 def player_goes_down_or_not(current_player) :
@@ -273,7 +272,6 @@ def player_decides_to_go_down_or_not(current_player) :
     # If player is down continue
     if current_player.get_is_player_down() == True :
         return
-    
     can_be_down, down_ranks = rules.can_player_go_down(current_player, 1)
 
     # We are just making players automatically go down

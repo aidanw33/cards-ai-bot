@@ -21,6 +21,36 @@ class Agent:
         # 1 to draw from the deck, 0 to draw from the discard pile
         draw_from_deck = random.randint(0, 1)
         return draw_from_deck
+    
+    @staticmethod
+    def smart_deck_or_disc(game_state):
+        """
+        This function takes in the game state and returns a list of all the cards in the deck or discard pile.
+        """
+        # Analyze the gamestate 
+        # What features do I want to use in the game state? 
+
+        # Get the current players turn
+        current_player_turn = game_state["current_player_turn"]
+        
+        # Cards in hand  --108 vector
+        player_hand_vector = game_state["player_encodings_hand"][current_player_turn]
+
+        # Top card in discard pile -- 108 vector
+        top_card_vector = game_state["top_card_discard_pile"]
+
+        # Ranks in down piles -- 13 vector
+        down_pile_ranks_vector = game_state["encoding_player_down_ranks"]
+
+        
+        # Outputs either 0 or 1 
+
+        # Reward at the end of the game on average after 30 decisions ...
+
+        # Choose to either draw from the deck or discard pile
+        # 1 to draw from the deck, 0 to draw from the discard pile
+        draw_from_deck = random.randint(0, 1)
+        return draw_from_deck
 
     @staticmethod
     def dumb_buy_choice(game_state) :

@@ -68,6 +68,13 @@ class Deck:
     def amount_in_deck(self) :
         return len(self.cards)
     
+    def reset_deck(self) :
+        # Resets the deck by removing all cards from the discard pile and putting them back into the deck
+        self.cards += self.discard_pile
+        self.discard_pile = []
+        self.shuffle()
+        self.discard(self.draw())
+    
     # Peaks amount_to_peek unless there are less than amount_to_peek cards in the discard pile, in that case it peaks all the cards in the discard pile
     def peak_discard_card(self, amount_to_peek):
         if len(self.discard_pile) > amount_to_peek :
