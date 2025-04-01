@@ -9,7 +9,7 @@ from agent import Agent
 # Controls the beginning of the turn for a player, they either choose to draw from the deck or the discard pile
 # If the player chooses to draw from the discard pile, this step is complete
 # If the player chooses to draw from the deck, they give the table the opportunity to buy the card/cards on the discard pile
-def player_draws_card_for_turn(current_player, deck, players, current_turn, game_state, action) :
+def player_draws_card_for_turn(current_player, deck, players, current_turn, game_state, action, opp_amount_to_buy) :
 
     
     # Action for playier, agent will be given game state to decide whether to draw from the deck or discard pile
@@ -22,8 +22,6 @@ def player_draws_card_for_turn(current_player, deck, players, current_turn, game
     if action == "deck" :
     '''
     # Only choose a random choice if we are the second player, otherwise it's being fed via AI
-    if current_turn == 1: 
-        action = Agent.dumb_deck_or_disc(game_state)
 
     if action == 1 :
         
@@ -40,7 +38,10 @@ def player_draws_card_for_turn(current_player, deck, players, current_turn, game
                 continue
             buyer = players[buyer_id]
             amount_to_buy = Agent.dumb_buy_choice(game_state)
+            if current_turn == 1 :
+                amount_to_buy = opp_amount_to_buy
 
+            
             if amount_to_buy == 0 :
                 print(f"Player {buyer.get_player_name()} chose not to buy any cards")
                 continue
@@ -77,7 +78,7 @@ def player_draws_card_for_turn(current_player, deck, players, current_turn, game
     else :
         current_player.draw_from_disc(deck)
     
-    print(f"current_player hand after drawing from {"deck" if action else "draw pile"}: {current_player.get_hand()}")
+    print(f"current_player hand after drawing from {"deck" if action else "discard pile"}: {current_player.get_hand()}")
 
 def player_discards_card_into_discard_pile(current_player, deck) :
 
@@ -110,7 +111,17 @@ def agent_player_discards_card_into_discard_pile(current_player, game_state, dec
 
     current_player.card_into_discard(deck, player_hand[card_to_discard])
 
-def agent_discards_card_into_discard_pile(current_player, players, round_number) :
+def agent_player_discards_card_into_discard_pile_beta(current_player, game_state, deck, card) :
+
+    # Agent will discard a card in their hand
+    # Input will be the game state, output will be the card that is being discarded
+    card_to_discard = card
+
+    player_hand = current_player.get_hand()
+
+    current_player.card_into_discard(deck, card)
+
+def agent_discards_card_into_down_pile(current_player, players, round_number) :
 
     if not current_player.get_is_player_down() :
         print("Player is not down, cannot discard into other down piles")

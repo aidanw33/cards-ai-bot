@@ -9,6 +9,7 @@ class Player:
         self._isDown = False
         self._buys_used = 0
         self._downPile = []
+        self._known_cards = []
 
     def draw(self, deck, num=1):
         for _ in range(num):
@@ -31,10 +32,13 @@ class Player:
             raise ValueError("There are no cards in the discard pile to draw from!")
         new_card = deck.draw_from_discard() 
         self._hand.append(new_card)
+        self._known_cards.append(new_card)
     
     # Removes card from players hand
     def remove_card_from_hand(self, card):
         self._hand.remove(card)
+        if card in self._known_cards :
+            self._known_cards.remove(card)
     
     # Get the one hot encoding for a players hand
     def get_encoding_hand(self) :
@@ -43,6 +47,15 @@ class Player:
             _, index = Card.map_to_encoding(card)
             encoding[index] = 1
 
+        return encoding
+
+    # Get the one hot encoding for a players known cards
+    def get_encoding_known_cards(self) :
+        encoding = [0] * 108
+        for card in self._known_cards :
+            _, index = Card.map_to_encoding(card)
+            encoding[index] = 1
+        
         return encoding
 
     def get_encoding_down_pile(self) :
@@ -77,6 +90,8 @@ class Player:
             if card_to_discard == card :
                 deck_to_discard.discard(card_to_discard)
                 self._hand.remove(card)
+                if card in self._known_cards:
+                    self._known_cards.remove(card)
                 print(f"discarding {card_to_discard}")
                 return
         
@@ -225,6 +240,9 @@ class Player:
     def get_down_pile(self) :
         return self._downPile
 
+    def get_known_cards(self) :
+        return self._known_cards
+    
     ### SETTERS ###
 
     def set_buys_used(self, buys_used) :

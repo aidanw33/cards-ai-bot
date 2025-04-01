@@ -356,6 +356,22 @@ def test_agent_discards_card_into_discard_pile_test2(fresh_data) :
     print("hand", p2._hand)
     assert len(p._hand) == 1 and len(p._downPile) == 11 and len(p2.get_hand()) == 1 and len(p2._downPile) == 0
 
+def test_linear_encoding_discard_pile_not_top_cards_test1(fresh_data) :
+    p, d = fresh_data
+    c2 = Card("3", "Diamonds", 1)
+    c3 = Card("3", "Clubs", 1)
+    c4 = Card("4", "Spades", 1)
+    c5 = Card("4", "Hearts", 1)
+    p._hand.append(c2)
+    p._hand.append(c3)  
+    p._hand.append(c4)
+    p._hand.append(c5)
+    p.card_into_discard(d, c2)
+    print(d.get_linear_encoding_discard_pile())
+    print(d.get_linear_encoding_discard_pile_not_top_cards(5))
+    assert d.get_linear_encoding_discard_pile() != d.get_linear_encoding_discard_pile_not_top_cards(1)
+
+
 '''
 def test_can_player_go_down_round1_test1(fresh_data, monkeypatch) :
     p, d = fresh_data
