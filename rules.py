@@ -1,7 +1,7 @@
 from player import Player
 from collections import Counter
 from cards import Card
-
+print = True
 # Either returns True or False depending on if the player can go down on the current round(round_number)
 def can_player_go_down(player, round_number):
     # Round 1 involves two sets of 3 cards, a.k.a two sets of 3 of a kind
@@ -41,19 +41,22 @@ def valid_cards_to_go_down_with(player, cards, round_number) :
     # Parse the cards as a string of inputs, verify that there are 6 cards
     cards = cards.split()
     if len(cards) != 6 :
-        print("You must go down with 6 cards, retry input")
+        if print:
+            print("You must go down with 6 cards, retry input")
         return False, None
     
     # Check if the cards are valid cards
     if not all(Card.is_a_valid_card(card) for card in cards) :
-        print("One of the cards you entered is not a valid card, retry input")
+        if print:
+            print("One of the cards you entered is not a valid card, retry input")
         return False, None
     
     # Verify that the cards are in the players hand, create a list of such cards
     for card in cards:
         is_card_in_hand, hcard = player.is_card_in_player_hand(card)
         if is_card_in_hand == False :
-            print(f"{card} is not in your hand, retry input")
+            if print:
+                print(f"{card} is not in your hand, retry input")
             return False, None
 
     

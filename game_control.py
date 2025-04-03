@@ -6,6 +6,8 @@ from collections import Counter
 import rules
 from agent import Agent
 
+_print = True
+
 # Controls the beginning of the turn for a player, they either choose to draw from the deck or the discard pile
 # If the player chooses to draw from the discard pile, this step is complete
 # If the player chooses to draw from the deck, they give the table the opportunity to buy the card/cards on the discard pile
@@ -25,7 +27,8 @@ def player_draws_card_for_turn(current_player, deck, players, current_turn, game
 
     if action == 1 :
         
-        print("#### Buying phase ####")
+        if _print :
+            print("#### Buying phase ####")
         # Define the order which players will get the opportunity to buy
         buy_order = []
         for i in range(1, len(players)) :
@@ -43,12 +46,14 @@ def player_draws_card_for_turn(current_player, deck, players, current_turn, game
 
             
             if amount_to_buy == 0 :
-                print(f"Player {buyer.get_player_name()} chose not to buy any cards")
+                if _print :
+                    print(f"Player {buyer.get_player_name()} chose not to buy any cards")
                 continue
             
             else :
                 buyer.buy_card(deck, amount_to_buy)
-                print(f"Player {buyer.get_player_name()} bought {amount_to_buy} cards from the discard pile")
+                if _print :
+                    print(f"Player {buyer.get_player_name()} bought {amount_to_buy} cards from the discard pile")
 
 
         '''
@@ -78,11 +83,13 @@ def player_draws_card_for_turn(current_player, deck, players, current_turn, game
     else :
         current_player.draw_from_disc(deck)
     
-    print(f"current_player hand after drawing from {"deck" if action else "discard pile"}: {current_player.get_hand()}")
+    if _print:
+        print(f"current_player hand after drawing from {"deck" if action else "discard pile"}: {current_player.get_hand()}")
 
 def player_discards_card_into_discard_pile(current_player, deck) :
 
-    print(f"Please discard a card that is in your hand: {current_player.get_hand()}")
+    if _print:  
+        print(f"Please discard a card that is in your hand: {current_player.get_hand()}")
     validCard = False
     while True: 
         
@@ -98,7 +105,8 @@ def player_discards_card_into_discard_pile(current_player, deck) :
             if handcard.rank == rank and handcard.suit == suit :
                 #this is the card we want to discard
                 current_player.card_into_discard(deck, handcard)
-                print(current_player.get_hand(), "hand after discard of ", handcard)
+                if _print:
+                    print(current_player.get_hand(), "hand after discard of ", handcard)
                 return
             
 def agent_player_discards_card_into_discard_pile(current_player, game_state, deck) :
@@ -124,7 +132,8 @@ def agent_player_discards_card_into_discard_pile_beta(current_player, game_state
 def agent_discards_card_into_down_pile(current_player, players, round_number) :
 
     if not current_player.get_is_player_down() :
-        print("Player is not down, cannot discard into other down piles")
+        if _print:
+            print("Player is not down, cannot discard into other down piles")
         return
     
     # Player is currenlty down, need the ranks of the cards in the other down piles
@@ -142,7 +151,8 @@ def agent_discards_card_into_down_pile(current_player, players, round_number) :
                 if card.rank in ranks :
                     opponent.add_card_to_down_pile_from_opponent(card)
                     current_player.remove_card_from_hand(card)
-                    print(f"Player {current_player.get_player_name()} discarded {card} into {opponent.get_player_name()}'s down pile")
+                    if _print:
+                        print(f"Player {current_player.get_player_name()} discarded {card} into {opponent.get_player_name()}'s down pile")
     
 
 
@@ -158,7 +168,8 @@ def player_discards_into_down_piles(current_player, players, round_number) :
     # Check the number of cards in our hand, we cannot discard into other hands with less than 2 cards
     if len(current_player.get_hand()) < 2 :
 
-        print("You cannot discard into other down piles with less than 2 cards in your hand")
+        if _print :
+            print("You cannot discard into other down piles with less than 2 cards in your hand")
         return
     
     # If we are down, and have cards to discard, we can now choose to discard into other down piles
@@ -175,36 +186,42 @@ def player_discards_into_down_piles(current_player, players, round_number) :
                         eligible_ranks[card.rank].append(player)
         
         # Print the eligible ranks to discard into
-        print("Eligible ranks to discard into:", eligible_ranks.keys())
+        if _print:
+            print("Eligible ranks to discard into:", eligible_ranks.keys())
 
         # Choose which cards to discard
         while True :
             cards_to_down_piles = input("Which cards are you discarding into other down piles?(card1 card2 ....)/exit")
             if cards_to_down_piles == "exit" :
-                print("Exiting discard into other down piles phase")
+                if _print:
+                    print("Exiting discard into other down piles phase")
                 break
             
             # Parse the cards as a string of inputs, verify that there are 2 cards
             cards_to_down_piles = cards_to_down_piles.split()
             if len(cards_to_down_piles) >= len(current_player.get_hand()) :
-                print("You cannot discard more than 1 less than the amount of cards in your hand, retry input")
+                if _print:
+                    print("You cannot discard more than 1 less than the amount of cards in your hand, retry input")
                 continue
             
             # Check if the cards are valid cards
             if not all(Card.is_a_valid_card(card_to_down_piles) for card_to_down_piles in cards_to_down_piles) :
-                print("One of the cards you entered is not a valid card, retry input")
+                if _print:
+                    print("One of the cards you entered is not a valid card, retry input")
                 continue
             
             # Verify that the cards are in the players hand, create a list of such cards
             for card_to_down_piles in cards_to_down_piles:
                 is_card_in_hand, hcard = current_player.is_card_in_player_hand(card_to_down_piles)
                 if is_card_in_hand == False :
-                    print(f"{card_to_down_piles} is not in your hand, retry input")
+                    if _print:
+                        print(f"{card_to_down_piles} is not in your hand, retry input")
                     continue
 
             # Check if the cards are eligible to discard into other down piles
             if not all(card_to_discard.rank in eligible_ranks for card_to_discard in cards_to_down_piles) :
-                print("One of the cards you entered is not eligible to discard into other down piles, retry input")
+                if _print:
+                    print("One of the cards you entered is not eligible to discard into other down piles, retry input")
                 continue
             
             # Remove the cards from the players hand
@@ -239,6 +256,11 @@ def calculate_player_scores(players) :
                 player_score -= 10
             elif card.rank in twenty_point_cards :
                 player_score -= 20
+        if player_score == 0 :
+            player_scores[i] = 1
+            player_scores[((i + 1) % 2)] = -1
+            return player_scores
+        
         player_scores[i] = player_score
     return player_scores
 
@@ -252,7 +274,8 @@ def player_goes_down_or_not(current_player) :
 
     # Print whether a player can go down or not
     if not can_be_down :
-        print("Cards in your hand are not eligible to go down with")
+        if _print:
+            print("Cards in your hand are not eligible to go down with")
         return
 
     if can_be_down :
@@ -264,7 +287,7 @@ def player_goes_down_or_not(current_player) :
     while True :
         cards_going_down = input("Which cards are you going down with?(card1 card2 card3 card4 card5 card6)/exit")
         if cards_going_down == "exit" :
-            print("Exiting go down phase, you will not go down")
+            _print("Exiting go down phase, you will not go down")
             break
         
         valid_cards, valid_cards_list = rules.valid_cards_to_go_down_with(current_player, cards_going_down, 1) 
@@ -274,7 +297,7 @@ def player_goes_down_or_not(current_player) :
             current_player.set_is_player_down(True)
             break
         else :
-            print("Invalid cards, retry input")
+            _print("Invalid cards, retry input")
             continue
 
 
@@ -287,8 +310,8 @@ def player_decides_to_go_down_or_not(current_player) :
 
     # We are just making players automatically go down
     if can_be_down : 
-        
-        print("Player is going down with ranks: ", down_ranks)
+        if _print:
+            print("Player is going down with ranks: ", down_ranks)
         # Player is going down, all cards in hand which match down_ranks or jokers will go into the down pile
         for card in current_player.get_hand()[:] :
             if card.rank in down_ranks or card.rank == "Joker" :

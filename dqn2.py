@@ -7,6 +7,10 @@ import torch.optim as optim
 import gymnasium as gym
 import matplotlib.pyplot as plt
 from env2 import CardGameEnv  # Assuming this is in env.py
+import sys
+
+original_stdout = sys.stdout
+sys.stdout = open("training_log.txt", "w")
 
 # Define the Q-Network
 class QNetwork(nn.Module):
@@ -14,12 +18,16 @@ class QNetwork(nn.Module):
         super().__init__()
         self.fc1 = nn.Linear(input_dim, 256)  # Input: 540-dimensional state
         self.fc2 = nn.Linear(256, 128)
-        self.fc3 = nn.Linear(128, output_dim)  # Output: 114 actions
+        self.fc3 = nn.Linear(128, 64)
+        self.fc4 = nn.Linear(64, output_dim)  # Output: 114 actions
+        
+
     
     def forward(self, x):
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
-        return self.fc3(x)
+        x = torch.relu(self.fc3(x))
+        return self.fc4(x)
 
 # Initialize environment and DQN components
 env = CardGameEnv()
@@ -31,7 +39,7 @@ replay_buffer = deque(maxlen=10000)
 epsilon = 1.0
 gamma = 0.99
 batch_size = 64
-num_episodes = 1000  # Reduced for practical training time
+num_episodes = 1500  # Reduced for practical training time
 max_steps = 1000  # Matches env.max_steps
 
 rewards_per_episode = []
@@ -103,7 +111,7 @@ for episode in range(num_episodes):
             break
     
     rewards_per_episode.append(total_reward)
-    epsilon = max(0.01, epsilon * 0.995)  # Decay epsilon
+    epsilon = max(0.01, epsilon * 0.999)  # Decay epsilon
     
     if episode % 100 == 0:
         target_net.load_state_dict(q_net.state_dict())  # Update target network
@@ -120,6 +128,10 @@ for episode in range(num_episodes):
         plt.draw()
         plt.pause(0.01)
     
+    sys.stdout = original_stdout
+    print(f"Episode {episode}, Total Reward: {total_reward}, Epsilon: {epsilon:.3f} (console)")
+    # Switch back to file
+    sys.stdout = open("training_log.txt", "a")  # Use "a" to append, not overwrite
     print(f"Episode {episode}, Total Reward: {total_reward:.2f}, Epsilon: {epsilon:.3f}")
 
 plt.ioff()

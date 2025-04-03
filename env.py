@@ -83,7 +83,7 @@ class CardGameEnv(gym.Env):
     
     def _compute_reward(self):
         # Only return the rewards at the end of the game 0 until then
-        print(self.game.get_rewards(), "rewards")
+        #print(self.game.get_rewards(), "rewards")
         return self.game.get_rewards()[0]
 
     

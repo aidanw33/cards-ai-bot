@@ -69,7 +69,8 @@ class Game:
             for i in range(len(linear_encoding_all_down_cards)) :
                 linear_encoding_all_down_cards[i] = linear_encoding_all_down_cards[i] | player_down_cards[i]
         game_state["linear_encoding_all_down_cards"] = linear_encoding_all_down_cards
-        print("down_cards", linear_encoding_all_down_cards) 
+        if self.print:
+            print("down_cards", linear_encoding_all_down_cards) 
 
         # Create action mask
         action_mask = [0] * 114
@@ -122,7 +123,7 @@ class Game:
             if player.get_is_player_down() :
                 ranks = player.get_ranks_in_down_pile() 
                 for rank in ranks :
-                    if rank != "Jack" and rank != "Queen" and rank != "King" and rank != "Ace" :
+                    if rank != "Jack" and rank != "Queen" and rank != "King" and rank != "Ace" and rank != "Joker":
                         rank = int(rank) - 1
                         encoding_player_down_ranks[rank] = 1
                     elif rank == "Jack" :
@@ -133,6 +134,8 @@ class Game:
                         encoding_player_down_ranks[12] = 1
                     elif rank == "Ace" :
                         encoding_player_down_ranks[0] = 1
+                    else :
+                        continue # For joker
 
         game_state["encoding_player_down_ranks"] = encoding_player_down_ranks
 
@@ -207,6 +210,8 @@ class Game:
             self.total_turns += 1
 
     def get_rewards(self) :
+        game_control.calculate_player_scores(self.players)
+
         if not self.is_game_over :
             return [0, 0]
         else :
@@ -313,9 +318,10 @@ class Game:
     def take_action_beta(self, action) :
 
         # action is an integer from 0 - 113
-        print("Action: ", action, " self.action", self.next_action)
-        print("ACTIONMASK", self.get_game_state()["action_mask"])
-        print("Has", 3 - self.players[0].get_buys_used(), "buys left")
+        if self.print :
+            print("Action: ", action, " self.action", self.next_action)
+            print("ACTIONMASK", self.get_game_state()["action_mask"])
+            print("Has", 3 - self.players[0].get_buys_used(), "buys left")
 
         if self.next_action == "deck/disc" :
             
@@ -331,7 +337,7 @@ class Game:
 
 
             # 2) Give the opportunity for players to buy the current card/cards on the discard pile if current player doesn't want discard buy
-            game_control.player_draws_card_for_turn(current_player, self.deck, self.players, self.current_turn, self.get_game_state(), self.action_draw_disc, 0)
+            game_control.player_draws_card_for_turn(current_player, self.deck, self.players, self.current_turn, self.get_game_state(), action, 0)
 
             # 4) Player is either down / or not down. Player makes choice to go down or not go down, must state which cards they are going down with
             game_control.player_decides_to_go_down_or_not(current_player)

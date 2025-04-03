@@ -9,7 +9,7 @@ class CardGameEnv(gym.Env):
         # Define action space: 0 or 1 (binary)
         self.action_space = gym.spaces.Discrete(114)  # 114 actions
         
-        # Define observation space: 648-dimensional vector
+        # Define observation space: 540-dimensional vector
         # Concatenation of 5 x 108
         self.observation_space = gym.spaces.Box(
             low=0, high=1, shape=(540,), dtype=np.float32
@@ -91,7 +91,7 @@ class CardGameEnv(gym.Env):
     
     def _compute_reward(self):
         # Only return the rewards at the end of the game 0 until then
-        print(self.game.get_rewards(), "rewards")
+        #print(self.game.get_rewards(), "rewards")
         return self.game.get_rewards()[0]
 
     

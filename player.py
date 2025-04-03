@@ -10,6 +10,7 @@ class Player:
         self._buys_used = 0
         self._downPile = []
         self._known_cards = []
+        self._print = True
 
     def draw(self, deck, num=1):
         for _ in range(num):
@@ -92,7 +93,8 @@ class Player:
                 self._hand.remove(card)
                 if card in self._known_cards:
                     self._known_cards.remove(card)
-                print(f"discarding {card_to_discard}")
+                if self._print :
+                    print(f"discarding {card_to_discard}")
                 return
         
         raise ValueError("Card is not in players hand, can not discard!")
@@ -222,6 +224,7 @@ class Player:
         for card in self._downPile :
             if card.rank not in ranks and card.rank != "Joker" :
                 ranks.add(card.rank)
+            ranks.add("Joker")
         return ranks
 
     ### GETTERS ###

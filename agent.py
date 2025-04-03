@@ -1,5 +1,5 @@
 import random
-
+_print = True
 
 class Agent:
     """
@@ -68,7 +68,8 @@ class Agent:
                 cards_available += 1
         
         # Choose a random number of cards to buy between 0 and cards_available, and not exceeding 3 for the player
-        print(game_state["buys_used"])
+        if _print :
+            print(game_state["buys_used"])
 
         # Just return 0 for now, no buys
         return 0
