@@ -10,7 +10,7 @@ class Player:
         self._buys_used = 0
         self._downPile = []
         self._known_cards = []
-        self._print = True
+        self._print = False
 
     def draw(self, deck, num=1):
         for _ in range(num):

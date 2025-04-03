@@ -17,7 +17,7 @@ class Game:
         self.total_turns = 0
         self.is_game_over = False
         self.action_draw_disc = 0
-        self.print = True
+        self.print = False
         self.next_action = "deck/disc"
         # Must be 6 players per game
         '''

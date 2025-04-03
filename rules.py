@@ -1,7 +1,7 @@
 from player import Player
 from collections import Counter
 from cards import Card
-print = True
+print = False
 # Either returns True or False depending on if the player can go down on the current round(round_number)
 def can_player_go_down(player, round_number):
     # Round 1 involves two sets of 3 cards, a.k.a two sets of 3 of a kind

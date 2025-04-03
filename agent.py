@@ -1,5 +1,5 @@
 import random
-_print = True
+_print = False
 
 class Agent:
     """

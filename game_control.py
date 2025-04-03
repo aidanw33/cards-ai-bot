@@ -6,7 +6,7 @@ from collections import Counter
 import rules
 from agent import Agent
 
-_print = True
+_print = False
 
 # Controls the beginning of the turn for a player, they either choose to draw from the deck or the discard pile
 # If the player chooses to draw from the discard pile, this step is complete
