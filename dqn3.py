@@ -34,10 +34,10 @@ target_net.load_state_dict(q_net.state_dict())
 optimizer = optim.Adam(q_net.parameters(), lr=0.0001)  # Lower LR
 replay_buffer = deque(maxlen=20000)  # Larger buffer
 epsilon = 1.0
-gamma = 0.999  # Higher gamma
+gamma = 0.95  # Higher gamma
 batch_size = 64
 num_episodes = 50000
-max_steps = 1000
+max_steps = 200
 rewards_per_episode = []
 
 plt.ion()
@@ -107,8 +107,9 @@ for episode in range(num_episodes):
             break
     
     rewards_per_episode.append(total_reward)
-    epsilon = max(0.01, 1.0 - episode / 10000)  # Linear decay
-    
+    epsilon = max(0.01, 1.0 - episode / 25000)  # Linear decay
+    #epsilon = max(0.01, 0.995 ** episode)  # Slower, smoother decay
+
     if episode % 50 == 0 or total_steps % 1000 == 0:  # More frequent updates
         target_net.load_state_dict(q_net.state_dict())
         avg_reward = np.mean(rewards_per_episode[-100:]) if rewards_per_episode else 0
@@ -125,6 +126,11 @@ for episode in range(num_episodes):
     print(f"Episode {episode}, Reward: {total_reward:.2f}, Steps: {step+1}, Epsilon: {epsilon:.3f}")
     sys.stdout = log_file
     print(f"Episode {episode}, Reward: {total_reward:.2f}, Steps: {step+1}, Epsilon: {epsilon:.3f}")
+
+
+# After training is complete (e.g., after the episode loop)
+torch.save(q_net.state_dict(), "trained_q_network.pth")
+print("Model state dictionary saved to 'trained_q_network.pth'")
 
 log_file.close()
 sys.stdout = original_stdout

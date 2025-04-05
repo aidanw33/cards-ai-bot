@@ -256,12 +256,17 @@ def calculate_player_scores(players) :
                 player_score -= 10
             elif card.rank in twenty_point_cards :
                 player_score -= 20
+
         if player_score == 0 :
             player_scores[i] = 1
             player_scores[((i + 1) % 2)] = -1
             return player_scores
         
-        player_scores[i] = player_score
+        if player.get_is_player_down() :
+            player_scores[i] = .01
+        else :
+            player_scores[i] = 0.00
+    print(player_scores)
     return player_scores
 
 def player_goes_down_or_not(current_player) :
