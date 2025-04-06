@@ -64,13 +64,14 @@ for episode in range(num_episodes):
         if np.random.rand() < epsilon:
             valid_actions = np.where(action_mask == 1)[0]
             action = np.random.choice(valid_actions) if len(valid_actions) > 0 else env.action_space.sample()
+            print(action)
         else:
             with torch.no_grad():
                 q_values = q_net(state)
                 masked_q_values = q_values.clone()
                 masked_q_values[action_mask == 0] = float('-inf')
                 action = torch.argmax(masked_q_values).item()
-        
+                print(action)
         next_observation, reward, done, truncated, info = env.step(action)
         next_state, next_action_mask = next_observation
         next_state = torch.FloatTensor(next_state).to(device)  # Move the next state to the GPU
@@ -96,7 +97,7 @@ for episode in range(num_episodes):
             dones = torch.FloatTensor(dones).to(device)  # Move dones to GPU
             next_action_masks = torch.stack([torch.FloatTensor(mask) for mask in next_action_masks]).to(device) 
 
-            
+
             q_values = q_net(states).gather(1, actions.unsqueeze(1)).squeeze(1)
             with torch.no_grad():
                 next_q_values = target_net(next_states)
