@@ -11,7 +11,7 @@ import sys
 
 # Check if GPU is available and set device accordingly
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+print(device)
 original_stdout = sys.stdout
 log_file = open("training_log.txt", "w")
 sys.stdout = log_file
@@ -87,13 +87,14 @@ for episode in range(num_episodes):
                 batch = random.sample(replay_buffer, batch_size)
             
             states, actions, rewards, next_states, dones, action_masks, next_action_masks = zip(*batch)
-            states = torch.FloatTensor(states).to(device)  # Move states to GPU
+            print(np.shape(states))
+            states = torch.FloatTensor(torch.stack(states)).to(device)  # Move states to GPU
             actions = torch.LongTensor(actions).to(device)  # Move actions to GPU
             rewards = torch.FloatTensor(rewards).to(device)  # Move rewards to GPU
-            next_states = torch.FloatTensor(next_states).to(device)  # Move next_states to GPU
+            next_states = torch.FloatTensor(torch.stack(next_states)).to(device)  # Move next_states to GPU
             dones = torch.FloatTensor(dones).to(device)  # Move dones to GPU
             next_action_masks = torch.FloatTensor(next_action_masks).to(device)  # Move next_action_masks to GPU
-            
+
             q_values = q_net(states).gather(1, actions.unsqueeze(1)).squeeze(1)
             with torch.no_grad():
                 next_q_values = target_net(next_states)

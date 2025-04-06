@@ -81,6 +81,7 @@ for episode in range(num_episodes):
                 batch = random.sample(replay_buffer, batch_size)
             
             states, actions, rewards, next_states, dones, action_masks, next_action_masks = zip(*batch)
+            print("shape", np.shape(states))
             states = torch.FloatTensor(states)
             actions = torch.LongTensor(actions)
             rewards = torch.FloatTensor(rewards)
