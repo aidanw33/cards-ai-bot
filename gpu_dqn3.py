@@ -124,13 +124,13 @@ for episode in range(num_episodes):
         ax.relim()
         ax.autoscale_view()
         plt.draw()
+        plt.savefig(f"reward_plot_episode_{episode}_steps_{total_steps}.png")  # Save the plot
         plt.pause(0.01)
     
     sys.stdout = original_stdout
     print(f"Episode {episode}, Reward: {total_reward:.2f}, Steps: {step+1}, Epsilon: {epsilon:.3f}")
     sys.stdout = log_file
     print(f"Episode {episode}, Reward: {total_reward:.2f}, Steps: {step+1}, Epsilon: {epsilon:.3f}")
-
 
 # After training is complete (e.g., after the episode loop)
 torch.save(q_net.state_dict(), "trained_q_network.pth")
