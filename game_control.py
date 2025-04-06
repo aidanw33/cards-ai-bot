@@ -84,7 +84,7 @@ def player_draws_card_for_turn(current_player, deck, players, current_turn, game
         current_player.draw_from_disc(deck)
     
     if _print:
-        print(f"current_player hand after drawing from {"deck" if action else "discard pile"}: {current_player.get_hand()}")
+        print(f"current_player hand after drawing from {'deck' if action else 'discard pile'}: {current_player.get_hand()}")
 
 def player_discards_card_into_discard_pile(current_player, deck) :
 
