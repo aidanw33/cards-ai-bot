@@ -89,14 +89,14 @@ for episode in range(num_episodes):
                 batch = random.sample(replay_buffer, batch_size)
             
             states, actions, rewards, next_states, dones, action_masks, next_action_masks = zip(*batch)
-            print(np.shape(states))
-            states = torch.FloatTensor(torch.stack(states)).to(device)  # Move states to GPU
+            states = torch.stack(states).to(device)  # Move states to GPU
             actions = torch.LongTensor(actions).to(device)  # Move actions to GPU
             rewards = torch.FloatTensor(rewards).to(device)  # Move rewards to GPU
-            next_states = torch.FloatTensor(torch.stack(next_states)).to(device)  # Move next_states to GPU
+            next_states = torch.stack(next_states).to(device)  # Move next_states to GPU
             dones = torch.FloatTensor(dones).to(device)  # Move dones to GPU
-            next_action_masks = torch.FloatTensor(next_action_masks).to(device)  # Move next_action_masks to GPU
+            next_action_masks = torch.stack([torch.FloatTensor(mask) for mask in next_action_masks]).to(device) 
 
+            
             q_values = q_net(states).gather(1, actions.unsqueeze(1)).squeeze(1)
             with torch.no_grad():
                 next_q_values = target_net(next_states)
