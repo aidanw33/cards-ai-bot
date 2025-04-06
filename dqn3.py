@@ -14,18 +14,16 @@ log_file = open("training_log.txt", "w")
 sys.stdout = log_file
 
 class QNetwork(nn.Module):
-    def __init__(self, input_dim=540, output_dim=114):
+    def __init__(self, input_dim=270, output_dim=60):
         super().__init__()
-        self.fc1 = nn.Linear(input_dim, 512)  # Larger capacity
-        self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, 128)
-        self.fc4 = nn.Linear(128, output_dim)
+        self.fc1 = nn.Linear(input_dim, 256)  # Larger capacity
+        self.fc2 = nn.Linear(256, 128)
+        self.fc3 = nn.Linear(128, output_dim)
     
     def forward(self, x):
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
-        x = torch.relu(self.fc3(x))
-        return self.fc4(x)
+        return self.fc3(x)
 
 env = CardGameEnv()
 q_net = QNetwork()

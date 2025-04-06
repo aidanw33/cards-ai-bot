@@ -360,6 +360,10 @@ class Game:
                 _, index = Card.map_to_encoding(card)
                 if index + 6 == action :
                     discard_card = card
+                elif index - 54 + 6 == action :
+                    discard_card = card
+
+            
             game_control.agent_player_discards_card_into_discard_pile_beta(self.players[self.current_turn], self.get_game_state(), self.deck, discard_card)
 
             # 7) If the player has no cards in their hand at the end of the round they have won the game

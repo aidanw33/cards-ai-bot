@@ -7,12 +7,12 @@ class CardGameEnv(gym.Env):
         super(CardGameEnv, self).__init__()
         
         # Define action space: 0 or 1 (binary)
-        self.action_space = gym.spaces.Discrete(114)  # 114 actions
+        self.action_space = gym.spaces.Discrete(60)  # 114 actions
         
         # Define observation space: 540-dimensional vector
         # Concatenation of 5 x 108
         self.observation_space = gym.spaces.Box(
-            low=0, high=1, shape=(540,), dtype=np.float32
+            low=0, high=1, shape=(270,), dtype=np.float32
         )
         
         # Your game logic object (replace with your actual game class/instance)
@@ -71,6 +71,15 @@ class CardGameEnv(gym.Env):
         cards_in_down_pile_vector = game_state["linear_encoding_all_down_cards"] 
         action_mask_vector = game_state["action_mask"]
 
+
+        # Reduce the action space from 108 * 5, to 56 * 5
+        player_hand_vector = [player_hand_vector[i] + player_hand_vector[i+54] for i in range(int(len(player_hand_vector)/2))]
+        top_card_vector = [top_card_vector[i] + top_card_vector[i+54] for i in range(int(len(top_card_vector)/2))]
+        dead_cards_vector = [dead_cards_vector[i] + dead_cards_vector[i+54] for i in range(int(len(dead_cards_vector)/2))]
+        opp_known_cards_vector = [opp_known_cards_vector[i] + opp_known_cards_vector[i+54] for i in range(int(len(opp_known_cards_vector)/2))]
+        cards_in_down_pile_vector = [cards_in_down_pile_vector[i] + cards_in_down_pile_vector[i+54] for i in range(int(len(cards_in_down_pile_vector)/2))]
+        action_mask_vector = action_mask_vector[0:6] + [min(action_mask_vector[i + 6] + action_mask_vector[i + 60], 1) for i in range(54)]
+
         # Convert to numpy arrays
         player_hand_vector = np.array(player_hand_vector, dtype=np.float32)
         top_card_vector = np.array(top_card_vector, dtype=np.float32)
@@ -79,7 +88,7 @@ class CardGameEnv(gym.Env):
         cards_in_down_pile_vector = np.array(cards_in_down_pile_vector, dtype=np.float32)
         action_mask_vector = np.array(action_mask_vector, dtype=np.float32)
 
-        # Concatenate into a single 229-dimensional vector
+        # Concatenate into a single 270-dimensional vector
         state = np.concatenate([
             player_hand_vector,
             top_card_vector,
