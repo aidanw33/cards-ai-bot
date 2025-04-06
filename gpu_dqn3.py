@@ -19,26 +19,28 @@ sys.stdout = log_file
 class QNetwork(nn.Module):
     def __init__(self, input_dim=270, output_dim=60):
         super().__init__()
-        self.fc1 = nn.Linear(input_dim, 256)  # Larger capacity
-        self.fc2 = nn.Linear(256, 128)
-        self.fc3 = nn.Linear(128, output_dim)
+        self.fc1 = nn.Linear(input_dim, 512)  # Larger capacity
+        self.fc2 = nn.Linear(512, 256)
+        self.fc3 = nn.Linear(256, 128)
+        self.fc4 = nn.Linear(128, output_dim)
     
     def forward(self, x):
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
-        return self.fc3(x)
+        x = torch.relu(self.fc3(x))
+        return self.fc4(x)
 
 # Initialize environment, models, and optimizer
 env = CardGameEnv()
 q_net = QNetwork().to(device)  # Move the model to the GPU (if available)
 target_net = QNetwork().to(device)  # Move the target network to the GPU
 target_net.load_state_dict(q_net.state_dict())
-optimizer = optim.Adam(q_net.parameters(), lr=0.0001)  # Lower LR
+optimizer = optim.Adam(q_net.parameters(), lr=0.001)  # Lower LR
 replay_buffer = deque(maxlen=20000)  # Larger buffer
 epsilon = 1.0
 gamma = 0.95  # Higher gamma
-batch_size = 64
-num_episodes = 50000
+batch_size = 256
+num_episodes = 10000
 max_steps = 200
 rewards_per_episode = []
 
@@ -112,7 +114,7 @@ for episode in range(num_episodes):
             break
     
     rewards_per_episode.append(total_reward)
-    epsilon = max(0.01, 1.0 - episode / 25000)  # Linear decay
+    epsilon = max(0.01, 1.0 - episode / 7500)  # Linear decay
 
     if episode % 50 == 0 or total_steps % 1000 == 0:  # More frequent updates
         target_net.load_state_dict(q_net.state_dict())
@@ -124,7 +126,7 @@ for episode in range(num_episodes):
         ax.relim()
         ax.autoscale_view()
         plt.draw()
-        plt.savefig(f"reward_plot_episode_{episode}_steps_{total_steps}.png")  # Save the plot
+        plt.savefig("reward_plot.png")  # Save the plot
         plt.pause(0.01)
     
     sys.stdout = original_stdout
