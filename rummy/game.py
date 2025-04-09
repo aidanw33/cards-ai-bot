@@ -6,7 +6,6 @@ import game_control
 from collections import Counter
 import threading
 import time
-import gui
 import sys
 
 class Game:
