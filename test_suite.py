@@ -146,23 +146,57 @@ def test_player_encoding_hand() :
 
 
 
-'''
 def test_player_going_down_test1(fresh_data) :
     p, d = fresh_data
-    c1 = Card("3", "Hearts")
-    c2 = Card("3", "Diamonds")
-    c3 = Card("3", "Clubs")
-    c4 = Card("4", "Spades")
-    c5 = Card("4", "Hearts")
-    c6 = Card("4", "Diamonds")
+    c1 = Card("3", "Hearts", 1)
+    c2 = Card("3", "Diamonds", 1)
+    c3 = Card("3", "Clubs", 1)
+    c4 = Card("4", "Spades", 1)
+    c5 = Card("4", "Hearts", 0)
+    c6 = Card("4", "Diamonds", 0)
     p._hand.append(c1)
     p._hand.append(c2)
     p._hand.append(c3)  
     p._hand.append(c4)
     p._hand.append(c5)
     p._hand.append(c6)
+    can_go_down, down_ranks = rules.can_player_go_down(p, 1)
+    assert can_go_down == True and down_ranks == ["3", "4"]
 
+def test_player_going_down_test2(fresh_data) :
+    p, d = fresh_data
+    c1 = Card("3", "Hearts", 1)
+    c2 = Card("3", "Diamonds", 1)
+    c3 = Card("3", "Clubs", 1)
+    c4 = Card("4", "Spades", 1)
+    c5 = Card("4", "Hearts", 0)
+    c6 = Card("Joker", "Diamonds", 0)
+    p._hand.append(c1)
+    p._hand.append(c2)
+    p._hand.append(c3)  
+    p._hand.append(c4)
+    p._hand.append(c5)
+    p._hand.append(c6)
+    can_go_down, down_ranks = rules.can_player_go_down(p, 1)
+    assert can_go_down == True and down_ranks == ["3", "4"]
 
+def test_player_going_down_test3(fresh_data) :
+    p, d = fresh_data
+    c1 = Card("3", "Hearts", 1)
+    c2 = Card("3", "Diamonds", 1)
+    c3 = Card("3", "Clubs", 1)
+    c4 = Card("4", "Spades", 1)
+    # c5 = Card("4", "Hearts", 0)
+    c6 = Card("Joker", "Diamonds", 0)
+    p._hand.append(c1)
+    p._hand.append(c2)
+    p._hand.append(c3)  
+    p._hand.append(c4)
+    # p._hand.append(c5)
+    p._hand.append(c6)
+    can_go_down, down_ranks = rules.can_player_go_down(p, 1)
+
+    assert can_go_down == False and down_ranks == ["3"]
 
 def test_is_a_valid_card_test1() :
     assert Card.is_a_valid_card("2h")
@@ -178,18 +212,175 @@ def test_is_a_valid_card_test4() :
 
 def test_is_a_valid_card_test5() :
     assert Card.is_a_valid_card("jo")
-encoding_discard
+
 def test_is_a_valid_card_test6() :
     assert not Card.is_a_valid_card("2j")
 
+def test_player_decides_to_go_down_or_not_test1(fresh_data) :
+    p, d = fresh_data
+    c1 = Card("3", "Hearts", 1)
+    c2 = Card("3", "Diamonds", 1)
+    c3 = Card("3", "Clubs", 1)
+    c4 = Card("4", "Spades", 1)
+    c5 = Card("4", "Hearts", 1)
+    c6 = Card("4", "Diamonds", 1)
+    p._hand.append(c1)
+    p._hand.append(c2)
+    p._hand.append(c3)  
+    p._hand.append(c4)
+    p._hand.append(c5)
+    p._hand.append(c6)
+    game_control.player_decides_to_go_down_or_not(p)
+    print("down_pile", p._downPile)
+    print("hand", p._hand)
+    assert p._isDown == True and len(p._downPile) == 6 and len(p._hand) == 0
+    
+def test_player_decides_to_go_down_or_not_test1(fresh_data) :
+    p, d = fresh_data
+    c1 = Card("3", "Hearts", 1)
+    c2 = Card("3", "Diamonds", 1)
+    c3 = Card("3", "Clubs", 1)
+    c4 = Card("4", "Spades", 1)
+    # c5 = Card("4", "Hearts", 1)
+    c6 = Card("4", "Diamonds", 1)
+    p._hand.append(c1)
+    p._hand.append(c2)
+    p._hand.append(c3)  
+    p._hand.append(c4)
+    # p._hand.append(c5)
+    p._hand.append(c6)
+    game_control.player_decides_to_go_down_or_not(p)
+    print("down_pile", p._downPile)
+    print("hand", p._hand)
+    assert p._isDown == False and len(p._downPile) == 0 and len(p._hand) == 5
+    
+def test_get_ranks_in_down_pile(fresh_data) :
+    p, d = fresh_data
+    c1 = Card("3", "Hearts", 1)
+    c2 = Card("3", "Diamonds", 1)
+    c3 = Card("3", "Clubs", 1)
+    c4 = Card("4", "Spades", 1)
+    c5 = Card("4", "Hearts", 1)
+    c6 = Card("4", "Diamonds", 1)
+    p._hand.append(c1)
+    p._hand.append(c2)
+    p._hand.append(c3)  
+    p._hand.append(c4)
+    p._hand.append(c5)
+    p._hand.append(c6)
+    game_control.player_decides_to_go_down_or_not(p)
+    print("down_pile", p._downPile)
+    ranks = p.get_ranks_in_down_pile()
+    print(ranks)
+    assert len(p.get_ranks_in_down_pile()) == 2 and "3" in ranks and "4" in ranks
+
+
+def test_agent_discards_card_into_discard_pile_test1(fresh_data) :
+    p, d = fresh_data
+    c1 = Card("3", "Hearts", 1)
+    c2 = Card("3", "Diamonds", 1)
+    c3 = Card("3", "Clubs", 1)
+    c4 = Card("4", "Spades", 1)
+    c5 = Card("4", "Hearts", 1)
+    c6 = Card("4", "Diamonds", 1)
+    c7 = Card("5", "Diamonds", 1)
+    p._hand.append(c1)
+    p._hand.append(c2)
+    p._hand.append(c3)  
+    p._hand.append(c4)
+    p._hand.append(c5)
+    p._hand.append(c6)
+    p._hand.append(c7)
+    game_control.player_decides_to_go_down_or_not(p)
+    print("down_pile", p._downPile)
+    print("hand", p._hand)
+
+    p2 = Player("test_user2", True)
+    p2.set_is_player_down(True)
+    c12 = Card("3", "Hearts", 0)
+    c22 = Card("3", "Diamonds", 0)
+    c32 = Card("3", "Clubs", 0)
+    c42 = Card("4", "Spades", 0)
+    c52 = Card("4", "Hearts", 0)
+    c62 = Card("4", "Diamonds", 0)
+    c72 = Card("5", "Diamonds", 0)
+    p2._hand.append(c12)
+    p2._hand.append(c22)
+    p2._hand.append(c32)  
+    p2._hand.append(c42)
+    p2._hand.append(c52)
+    p2._hand.append(c62)
+    p2._hand.append(c72)
+
+    game_control.agent_discards_card_into_discard_pile(p2, [p, p2], 1)
+    print("down_pile", p._downPile)
+    assert len(p._hand) == 1 and len(p._downPile) == 12 and len(p2.get_hand()) == 1 and len(p2._downPile) == 0
+
+def test_agent_discards_card_into_discard_pile_test2(fresh_data) :
+    p, d = fresh_data
+    c1 = Card("3", "Hearts", 1)
+    c2 = Card("3", "Diamonds", 1)
+    c3 = Card("3", "Clubs", 1)
+    c4 = Card("4", "Spades", 1)
+    c5 = Card("4", "Hearts", 1)
+    c6 = Card("4", "Diamonds", 1)
+    c7 = Card("5", "Diamonds", 1)
+    p._hand.append(c1)
+    p._hand.append(c2)
+    p._hand.append(c3)  
+    p._hand.append(c4)
+    p._hand.append(c5)
+    p._hand.append(c6)
+    p._hand.append(c7)
+    game_control.player_decides_to_go_down_or_not(p)
+    print("down_pile", p._downPile)
+    print("hand", p._hand)
+
+    p2 = Player("test_user2", True)
+    p2.set_is_player_down(True)
+    c12 = Card("3", "Hearts", 0)
+    c22 = Card("3", "Diamonds", 0)
+    c32 = Card("3", "Clubs", 0)
+    c42 = Card("4", "Spades", 0)
+    c52 = Card("4", "Hearts", 0)
+    c62 = Card("4", "Diamonds", 0)
+    p2._hand.append(c12)
+    p2._hand.append(c22)
+    p2._hand.append(c32)  
+    p2._hand.append(c42)
+    p2._hand.append(c52)
+    p2._hand.append(c62)
+
+    game_control.agent_discards_card_into_discard_pile(p2, [p, p2], 1)
+    print("down_pile", p._downPile)
+    print("hand", p2._hand)
+    assert len(p._hand) == 1 and len(p._downPile) == 11 and len(p2.get_hand()) == 1 and len(p2._downPile) == 0
+
+def test_linear_encoding_discard_pile_not_top_cards_test1(fresh_data) :
+    p, d = fresh_data
+    c2 = Card("3", "Diamonds", 1)
+    c3 = Card("3", "Clubs", 1)
+    c4 = Card("4", "Spades", 1)
+    c5 = Card("4", "Hearts", 1)
+    p._hand.append(c2)
+    p._hand.append(c3)  
+    p._hand.append(c4)
+    p._hand.append(c5)
+    p.card_into_discard(d, c2)
+    print(d.get_linear_encoding_discard_pile())
+    print(d.get_linear_encoding_discard_pile_not_top_cards(5))
+    assert d.get_linear_encoding_discard_pile() != d.get_linear_encoding_discard_pile_not_top_cards(1)
+
+
+'''
 def test_can_player_go_down_round1_test1(fresh_data, monkeypatch) :
     p, d = fresh_data
-    c1 = Card("3", "Hearts")
-    c2 = Card("3", "Diamonds")
-    c3 = Card("3", "Clubs")
-    c4 = Card("4", "Spades")
-    c5 = Card("4", "Hearts")
-    c6 = Card("4", "Diamonds")
+    c1 = Card("3", "Hearts", 1)
+    c2 = Card("3", "Diamonds", 1)
+    c3 = Card("3", "Clubs", 1)
+    c4 = Card("4", "Spades", 1)
+    c5 = Card("4", "Hearts", 1)
+    c6 = Card("4", "Diamonds", 1)
     p._hand.append(c1)
     p._hand.append(c2)
     p._hand.append(c3)  

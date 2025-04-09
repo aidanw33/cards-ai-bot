@@ -31,6 +31,20 @@ class Deck:
 
         return encoding
     
+    # Creates an encoding of all the cards currently in the discard pile excluding the top 'excluded_count' cards
+    def get_linear_encoding_discard_pile_not_top_cards(self, excluded_count) :
+        encoding = [0] * 108
+
+        count = 0
+        for card in self.discard_pile :
+            if count < excluded_count :
+                count += 1
+                continue
+            _, index = Card.map_to_encoding(card)
+            encoding[index] = 1
+
+        return encoding
+    
     # Creates an encoding of the top amount_to_peek cards in the discard pile, returns a list of invidual card encodings
     def get_matrix_encoding_discard_pile(self, amount_to_peek) :
         encoding = []
@@ -68,9 +82,16 @@ class Deck:
     def amount_in_deck(self) :
         return len(self.cards)
     
+    def reset_deck(self) :
+        # Resets the deck by removing all cards from the discard pile and putting them back into the deck
+        self.cards += self.discard_pile
+        self.discard_pile = []
+        self.shuffle()
+        self.discard(self.draw())
+    
     # Peaks amount_to_peek unless there are less than amount_to_peek cards in the discard pile, in that case it peaks all the cards in the discard pile
     def peak_discard_card(self, amount_to_peek):
-        if len(self.discard_pile) > amount_to_peek :
+        if len(self.discard_pile) < amount_to_peek :
             amount_to_peek = len(self.discard_pile)
         return self.discard_pile[-amount_to_peek:][::-1]
 
