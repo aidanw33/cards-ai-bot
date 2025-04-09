@@ -1,136 +1,181 @@
-import tkinter as tk
-from tkinter import messagebox, ttk
-import random
-from PIL import Image, ImageTk
+import matplotlib.pyplot as plt
+import numpy as np
+import matplotlib.image as mpimg
 
-class CardGameGUI:
-    def __init__(self, master):
-        self.master = master
-        self.master.title("6-Player Card Game")
-        self.master.geometry("800x900")  # Adjusted window size
+default_image = "PNG-cards-1.3/2_of_clubs.png"  # Default image to use when a file is missing
+discard_pile_x = 1.05
+discard_pile_y_start = 0.4
+discard_pile_spacing = 0.05
+draw_pile_size = .1
 
-        # Create a deck of cards
-        self.deck = self.create_deck()
-        self.players = self.create_players()
+def open_game_window():
+    global fig, ax, img_artists, image_filenames, discard_pile_images, discard_pile_artists
+    
+    # Define the number of sections and columns
+    global num_sections, num_columns
+    num_sections = 6
+    num_columns = 18
+    
+    # List of default image filenames for each subsection
+    image_filenames = [[default_image] * num_columns for _ in range(num_sections)]
+    discard_pile_images = ["discard_pile_1.png", "discard_pile_2.png", "discard_pile_3.png"]
 
-        # Create and set up the main frame
-        self.main_frame = tk.Frame(self.master)
-        self.main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+    # Create figure and axis
+    fig, ax = plt.subplots(figsize=(12, 6))  # Adjust width to make space for draw and discard piles
+    ax.set_xticks([])  # Remove ticks
+    ax.set_yticks([])  # Remove ticks
+    ax.set_frame_on(False)  # Remove the frame
 
-        # Create the deck frame
-        self.deck_frame = tk.Frame(self.main_frame, relief=tk.RAISED, borderwidth=2)
-        self.deck_frame.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
+    # Stretch the content to the edges
+    ax.set_xlim(0, 1)  # Set x-axis limits to stretch content to the full width
+    ax.set_ylim(0, 1)  # Set y-axis limits to stretch content to the full height
 
-        # Create the deck label
-        self.deck_label = tk.Label(self.deck_frame, text="Deck", font=("Arial", 14))
-        self.deck_label.pack(side=tk.LEFT, padx=5, pady=5)
+    # Define section widths and heights based on axis limits
+    width = 1 / num_columns  # Width of each card image (now scaled to fit the full width)
+    height = 1 / num_sections  # Height of each card section (now scaled to fit the full height)
 
-        # Create the deal button
-        self.deal_button = tk.Button(self.deck_frame, text="Deal Cards", command=self.deal_cards)
-        self.deal_button.pack(side=tk.RIGHT, padx=5, pady=5)
+    # Draw sections with image tiles
+    img_artists = []
+    for i in range(num_sections):
+        row = []
+        for j in range(num_columns):
+            # Calculate the correct position for each card in the row
+            x_min = j * width 
+            x_max = (j + 1) * width
+            y_min = i * height
+            y_max = (i + 1) * height
+            image = load_image(image_filenames[i][j])
+            
+            # Place the image with adjusted extents
+            img = ax.imshow(image, extent=[x_min, x_max, y_min, y_max])
+            row.append(img)
+        img_artists.append(row)
 
-        # Create the play area frame
-        self.play_area_frame = tk.Frame(self.main_frame, relief=tk.RAISED, borderwidth=2)
-        self.play_area_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True, padx=10, pady=10)
+    # Draw pile (single image to the right)
+    draw_pile_x = 1.05  # Position slightly outside the main sections
+    draw_pile_y = 0.75  # Adjust height position
+    draw_pile_size = 0.1  # Size of the image
+    draw_pile_image = load_image("PNG-cards-1.3/Blank-Playing-Card.png")
+    ax.imshow(draw_pile_image, extent=[draw_pile_x, draw_pile_x + draw_pile_size, draw_pile_y, draw_pile_y + draw_pile_size])
+    ax.text(draw_pile_x + draw_pile_size / 2, draw_pile_y - 0.05, "Draw Pile", ha='center', va='center', fontsize=10, color='black')
+    
+    # Discard pile (three stacked images to the right, now stored as artists)
+    discard_pile_x = 1.05
+    discard_pile_y_start = 0.4
+    discard_pile_spacing = 0.05
+    discard_pile_artists = []  # Clear the artists list before populating
+    for i, discard_image in enumerate(discard_pile_images):
+        img = load_image(discard_image)
+        discard_artist = ax.imshow(img, extent=[discard_pile_x, discard_pile_x + draw_pile_size, 
+                                               discard_pile_y_start - i * discard_pile_spacing, 
+                                               discard_pile_y_start + draw_pile_size - i * discard_pile_spacing])
+        discard_pile_artists.append(discard_artist)  # Store the artist
+        
+    ax.text(discard_pile_x + draw_pile_size / 2, discard_pile_y_start - 3 * discard_pile_spacing - 0.05, "Discard Pile", ha='center', va='center', fontsize=10, color='black')
+    
+    # Set limits
+    ax.set_xlim(0, 1.2)  # Extend x limit to fit piles (you can adjust this for more space)
+    ax.set_ylim(0, 1)
 
-        # Create the play area label
-        self.play_area_label = tk.Label(self.play_area_frame, text="Players' Hands", font=("Arial", 14))
-        self.play_area_label.pack(pady=5)
+    # Show plot
+    plt.ion()
+    plt.tight_layout()
+    plt.show()
 
-        # Create a scrollable frame for displaying players' hands
-        self.scroll_frame = ttk.Frame(self.play_area_frame)
-        self.scroll_canvas = tk.Canvas(self.scroll_frame, width=750, height=800)
-        self.scrollbar = ttk.Scrollbar(self.scroll_frame, orient="vertical", command=self.scroll_canvas.yview)
-        self.scroll_canvas.configure(yscrollcommand=self.scrollbar.set)
 
-        self.scrollbar.pack(side="right", fill="y")
-        self.scroll_canvas.pack(side="left", fill="both", expand=True)
+def load_image(filename):
+    try:
+        return mpimg.imread(filename)
+    except FileNotFoundError:
+        print(f"Warning: {filename} not found. Using default image.")
+        return mpimg.imread(default_image)
 
-        self.scroll_window = ttk.Frame(self.scroll_canvas)
-        self.scroll_canvas.create_window((0, 0), window=self.scroll_window, anchor="nw")
+def set_images(image_list, discard_vector):
+    global image_filenames
+    global discard_pile_images
 
-        self.scroll_window.bind("<Configure>", self.on_configure)
-        self.scroll_frame.pack(fill=tk.BOTH, expand=True)
+    image_list = get_image_name_from_vector(image_list)
+    discard_pile_images = get_image_name_from_vector_draw_pile(discard_vector)
+    if len(image_list) != num_sections * num_columns:
+        raise ValueError("Image list must contain exactly {} elements".format(num_sections * num_columns))
+    
+    image_filenames = [image_list[i * num_columns:(i + 1) * num_columns] for i in range(num_sections)]
+    update_plot()
 
-        # Load card images
-        self.card_images = self.load_card_images()
+def get_image_name_from_vector_draw_pile(vector) :
+    card_names = [
+    "2_of_diamonds.png", "2_of_hearts.png", "2_of_clubs.png", "2_of_spades.png", 
+    "3_of_diamonds.png", "3_of_hearts.png", "3_of_clubs.png", "3_of_spades.png",  
+    "4_of_diamonds.png", "4_of_hearts.png", "4_of_clubs.png", "4_of_spades.png",  
+    "5_of_diamonds.png", "5_of_hearts.png", "5_of_clubs.png", "5_of_spades.png",  
+    "6_of_diamonds.png", "6_of_hearts.png", "6_of_clubs.png", "6_of_spades.png",  
+    "7_of_diamonds.png", "7_of_hearts.png", "7_of_clubs.png", "7_of_spades.png",  
+    "8_of_diamonds.png", "8_of_hearts.png", "8_of_clubs.png", "8_of_spades.png",  
+    "9_of_diamonds.png", "9_of_hearts.png", "9_of_clubs.png", "9_of_spades.png",  
+    "10_of_diamonds.png", "10_of_hearts.png", "10_of_clubs.png", "10_of_spades.png",  
+    "jack_of_diamonds.png", "jack_of_hearts.png", "jack_of_clubs.png", "jack_of_spades.png",  
+    "queen_of_diamonds.png", "queen_of_hearts.png", "queen_of_clubs.png", "queen_of_spades.png",  
+    "king_of_diamonds.png", "king_of_hearts.png", "king_of_clubs.png", "king_of_spades.png",  
+    "ace_of_diamonds.png", "ace_of_hearts.png", "ace_of_clubs.png", "ace_of_spades.png",  
+    "red_joker.png", "black_joker.png"  
+    ]
+    image_list = []
+    for v in vector: 
+        hand_list = []
+        for i in range(len(v)) :
+            if v[i] == 1 :
+                card_name_index = i % 54
+                hand_list.append(f"PNG-cards-1.3/{card_names[card_name_index]}")
+        buffer = 1 - len(hand_list)
+        for i in range(buffer) :
+            hand_list.append(f"PNG-cards-1.3/Blank-Playing-Card.png")
+        image_list.extend(hand_list)
+    print(image_list)
+    return image_list
 
-    def on_configure(self, event):
-        """Update the scroll region when the contents change."""
-        self.scroll_canvas.configure(scrollregion=self.scroll_canvas.bbox("all"))
+def get_image_name_from_vector(vector) :
+    card_names = [
+    "2_of_diamonds.png", "2_of_hearts.png", "2_of_clubs.png", "2_of_spades.png", 
+    "3_of_diamonds.png", "3_of_hearts.png", "3_of_clubs.png", "3_of_spades.png",  
+    "4_of_diamonds.png", "4_of_hearts.png", "4_of_clubs.png", "4_of_spades.png",  
+    "5_of_diamonds.png", "5_of_hearts.png", "5_of_clubs.png", "5_of_spades.png",  
+    "6_of_diamonds.png", "6_of_hearts.png", "6_of_clubs.png", "6_of_spades.png",  
+    "7_of_diamonds.png", "7_of_hearts.png", "7_of_clubs.png", "7_of_spades.png",  
+    "8_of_diamonds.png", "8_of_hearts.png", "8_of_clubs.png", "8_of_spades.png",  
+    "9_of_diamonds.png", "9_of_hearts.png", "9_of_clubs.png", "9_of_spades.png",  
+    "10_of_diamonds.png", "10_of_hearts.png", "10_of_clubs.png", "10_of_spades.png",  
+    "jack_of_diamonds.png", "jack_of_hearts.png", "jack_of_clubs.png", "jack_of_spades.png",  
+    "queen_of_diamonds.png", "queen_of_hearts.png", "queen_of_clubs.png", "queen_of_spades.png",  
+    "king_of_diamonds.png", "king_of_hearts.png", "king_of_clubs.png", "king_of_spades.png",  
+    "ace_of_diamonds.png", "ace_of_hearts.png", "ace_of_clubs.png", "ace_of_spades.png",  
+    "red_joker.png", "black_joker.png"  
+    ]
 
-    def create_deck(self):
-        """Create a standard deck of 52 cards."""
-        suits = ['hearts', 'diamonds', 'clubs', 'spades']
-        ranks = ['ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king']
-        deck = [{'suit': suit, 'rank': rank} for suit in suits for rank in ranks]
-        random.shuffle(deck)
-        return deck
+    image_list = []
+    for v in vector: 
+        hand_list = []
+        for i in range(len(v)) :
+            if v[i] == 1 :
+                card_name_index = i % 54
+                hand_list.append(f"PNG-cards-1.3/{card_names[card_name_index]}")
+        buffer = 18 - len(hand_list)
+        for i in range(buffer) :
+            hand_list.append(f"PNG-cards-1.3/Blank-Playing-Card.png")
+        image_list.extend(hand_list)
+    return image_list
 
-    def create_players(self):
-        """Create 6 players with empty hands."""
-        return [{'name': f'Player {i+1}', 'hand': []} for i in range(6)]
-
-    def load_card_images(self):
-        """Load and resize card images from the specified directory."""
-        card_images = {}
-        for suit in ['hearts', 'diamonds', 'clubs', 'spades']:
-            for rank in ['ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king']:
-                image_path = f"PNG-cards-1.3/{rank}_of_{suit}.png"
-                try:
-                    image = Image.open(image_path)
-                    # Resize the image to 60x80 pixels
-                    image = image.resize((60, 80), Image.LANCZOS)
-                    card_images[f"{rank}_of_{suit}"] = ImageTk.PhotoImage(image)
-                except FileNotFoundError:
-                    print(f"Warning: Image not found for {rank} of {suit}")
-        return card_images
-
-    def deal_cards(self):
-        """Deal 8 cards to each player."""
-        if len(self.deck) < 48:  # 6 players * 8 cards each
-            messagebox.showinfo("Not Enough Cards", "Not enough cards in the deck to deal to all players.")
-            return
-
-        for player in self.players:
-            player['hand'] = [self.deck.pop() for _ in range(8)]
-
-        self.display_hands()
-
-    def display_hands(self):
-        """Display all players' hands in the scrollable frame."""
-        for widget in self.scroll_window.winfo_children():
-            widget.destroy()
-
-        y = 10
-        hand_width = 750  # Adjusted to fit 8 cards
-        hand_height = 100
-
-        for i, player in enumerate(self.players):
-            # Create a frame for the player's hand
-            hand_frame = tk.Frame(self.scroll_window, relief=tk.RAISED, borderwidth=2, width=hand_width, height=hand_height)
-            hand_frame.pack(pady=5)
-
-            # Display player name
-            player_label = tk.Label(hand_frame, text=player['name'], font=("Arial", 12))
-            player_label.pack(pady=5)
-
-            # Display cards in the hand
-            card_frame = tk.Frame(hand_frame)
-            card_frame.pack(pady=5)
-
-            for j, card in enumerate(player['hand']):
-                card_image = self.card_images.get(f"{card['rank']}_of_{card['suit']}")
-                if card_image:
-                    card_label = tk.Label(card_frame, image=card_image)
-                    card_label.image = card_image  # Keep a reference to prevent garbage collection
-                    card_label.grid(row=0, column=j, padx=2, pady=2)
-                else:
-                    print(f"Warning: Image not found for {card['rank']} of {card['suit']}")
-
-            y += hand_height + 10
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    game = CardGameGUI(root)
-    root.mainloop()
+def update_plot():
+    global img_artists
+    global discard_pile_images
+    for i in range(num_sections):
+        for j in range(num_columns):
+            image = load_image(image_filenames[i][j])
+            img_artists[i][j].set_data(image)
+    
+    # Update the discard pile images (using set_data)
+    for i, discard_image in enumerate(discard_pile_images):
+        if i < 3 :
+            img = load_image(discard_image)
+            discard_pile_artists[i].set_data(img)  # Update discard pile images
+    
+    plt.draw()

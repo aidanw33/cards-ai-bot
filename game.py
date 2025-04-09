@@ -3,12 +3,16 @@ from player import Player
 from cards import Card
 import game_control
 from collections import Counter
+import threading
+import time
+import gui
 
 class Game:
     def __init__(self, player_names):
         self.deck = Deck()
         self.actions = ["d"]
-        
+        self.gui = None
+
         # Must be 6 players per game
         if len(player_names) != 6 :
             raise ValueError("There must be exactly six players per game")
@@ -25,6 +29,45 @@ class Game:
 
         # Determine the current turn, start on player 0
         self.current_turn = 0
+
+    def get_game_state(self) : 
+        
+        # Returns the current game state in it's entirety
+        game_state = {}
+        # Get the linear one hot encoding for the discard pile  DECK 
+        linear_encoding_discard_pile = self.deck.get_linear_encoding_discard_pile()
+        game_state["linear_encoding_discard_pile"] = linear_encoding_discard_pile
+
+        # Get the 2d matrix encoding for the discard pile for X cards DECK
+        TWOd_matrix_encoding_discard_pile = self.deck.get_matrix_encoding_discard_pile(3)
+        game_state["TWOd_matrix_encoding_discard_pile"] = TWOd_matrix_encoding_discard_pile
+
+        # Get the one hot encoding for all cards in the draw pile DECK
+        encoding_draw_pile = self.deck.get_encoding_deck()
+        game_state["encoding_draw_pile"] = encoding_draw_pile
+
+        # Get the one hot encoding for the players hands, both public and private hands PLAYER
+        player_encodings_hand = []
+        for player in self.players :
+            player_encodings_hand.append(player.get_encoding_hand())
+        game_state["player_encodings_hand"] = player_encodings_hand
+
+        # Get the one hot encoding for the players down piles PLAYER
+        player_encodings_down_pile = []
+        for player in self.players :
+            player_encodings_down_pile.append(player.get_encoding_down_pile())       
+        game_state["player_encodings_down_pile"] = player_encodings_down_pile
+
+        # Get the one hot encoding for cards we have not seen yet GAME
+
+        # Get the one hot encoding for cards we have seen GAME 
+
+        # Get the one hot encoding for all cards the an agent can see is in another players hands, public hand GAME
+
+        # Get the turn of the current player
+        game_state["current_player_turn"] = self.current_turn
+
+        return game_state
 
     # Represents the game_flow of the game which can be broken down into a few different steps:
     # 1) Identify which players turn it currently is
@@ -66,23 +109,31 @@ class Game:
 
             self.current_turn = (self.current_turn + 1) % len(self.players)
 
+
+
+
     def start_game(self, starting_cards=5):
         
         start = input("Press enter to start game")
         
+        gui.open_game_window()
+        game_state = self.get_game_state()
+
+        gui.set_images(game_state["player_encodings_hand"], game_state["TWOd_matrix_encoding_discard_pile"])
+
         # Begin the game
         self.game_flow()
-
+        
 
     def is_game_over(self):
         # Define game-ending condition
         return False  
 
-
-
+        
 
 # Example usage:
 game = Game(["Alice", "Bob", "Charlie", "David", "Eddie", "Fred"])
+
 game.start_game()
 while not game.is_game_over():
     game.next_turn()
