@@ -210,11 +210,7 @@ class Game:
 
     def get_rewards(self) :
         #return game_control.calculate_player_scores(self.players)
-
-        if not self.is_game_over :
-            return [0, 0]
-        else :
-            return game_control.calculate_player_scores(self.players)
+        return game_control.calculate_player_scores_shaped(self.players)
 
     def reset(self) :
         self.deck = Deck()

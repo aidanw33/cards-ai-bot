@@ -237,6 +237,33 @@ def player_discards_into_down_piles(current_player, players, round_number) :
                     eligible_ranks[hcard.rank][0].add_card_to_down_pile_from_opponent(hcard)
             
             break
+def calculate_player_scores_shaped(players) :
+
+    player_scores = [0] * len(players)
+
+    for i, player in enumerate(players) :
+        player_score = 0
+        # If player is down, give them more of a reward based on how many cards they have left
+        if player.get_is_player_down() :
+            if len(player.get_hand()) == 0 :
+                player_scores[i] = 100
+                continue
+
+            player_score += (1/3)
+            player_score += (1/2) - ((len(player.get_hand()))/36)
+            player_scores[i] = player_score
+            continue
+        ranks = {}
+        for card in player.get_hand() :
+            ranks[card.rank] = ranks.get(card.rank, 0) + 1
+        if max(ranks.values()) >= 3 :
+            player_score += .1
+        player_scores[i] = player_score
+    return player_scores
+
+        
+
+
 
 def calculate_player_scores(players) :
 

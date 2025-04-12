@@ -15,22 +15,20 @@ log_file = open("training_log.txt", "w")
 sys.stdout = log_file
 
 class ActorCritic(nn.Module):
-    def __init__(self, input_dim=270, output_dim=60):
+    def __init__(self, input_dim=42, output_dim=20):
         super().__init__()
         # Shared backbone
-        self.fc1 = nn.Linear(input_dim, 512)
-        self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, 128)
+        self.fc1 = nn.Linear(input_dim, 128)
+        self.fc2 = nn.Linear(128, 64)
         
         # Actor head (policy)
-        self.actor = nn.Linear(128, output_dim)
+        self.actor = nn.Linear(64, output_dim)
         # Critic head (value)
-        self.critic = nn.Linear(128, 1)
+        self.critic = nn.Linear(64, 1)
     
     def forward(self, x):
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
-        x = torch.relu(self.fc3(x))
         logits = self.actor(x)
         value = self.critic(x)
         return logits, value
