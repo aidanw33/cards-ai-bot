@@ -38,7 +38,7 @@ replay_buffer = deque(maxlen=20000)  # Larger buffer
 epsilon = 1.0
 gamma = 0.95  # Higher gamma
 batch_size = 256
-num_episodes = 10000
+num_episodes = 100000
 max_steps = 200
 rewards_per_episode = []
 
@@ -111,7 +111,7 @@ for episode in range(num_episodes):
             break
     
     rewards_per_episode.append(total_reward)
-    epsilon = max(0.01, 1.0 - episode / 7500)  # Linear decay
+    epsilon = max(0.01, 1.0 - episode / 75000)  # Linear decay
 
     if episode % 50 == 0 or total_steps % 1000 == 0:  # More frequent updates
         target_net.load_state_dict(q_net.state_dict())
