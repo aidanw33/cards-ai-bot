@@ -261,7 +261,8 @@ def calculate_player_scores(players) :
             player_scores[i] = 1
             player_scores[((i + 1) % 2)] = -1
             return player_scores
-        
+        else :
+            return [0, 0]
         if player.get_is_player_down() :
             player_scores[i] = .01
         else :

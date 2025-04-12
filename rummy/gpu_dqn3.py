@@ -17,18 +17,16 @@ log_file = open("training_log.txt", "w")
 sys.stdout = log_file
 
 class QNetwork(nn.Module):
-    def __init__(self, input_dim=270, output_dim=60):
+    def __init__(self, input_dim=42, output_dim=20):
         super().__init__()
-        self.fc1 = nn.Linear(input_dim, 512)  # Larger capacity
-        self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, 128)
-        self.fc4 = nn.Linear(128, output_dim)
+        self.fc1 = nn.Linear(input_dim, 128)  # Larger capacity
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, output_dim)
     
     def forward(self, x):
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
-        x = torch.relu(self.fc3(x))
-        return self.fc4(x)
+        return self.fc3(x)
 
 # Initialize environment, models, and optimizer
 env = CardGameEnv()
@@ -64,14 +62,12 @@ for episode in range(num_episodes):
         if np.random.rand() < epsilon:
             valid_actions = np.where(action_mask == 1)[0]
             action = np.random.choice(valid_actions) if len(valid_actions) > 0 else env.action_space.sample()
-            print(action)
         else:
             with torch.no_grad():
                 q_values = q_net(state)
                 masked_q_values = q_values.clone()
                 masked_q_values[action_mask == 0] = float('-inf')
                 action = torch.argmax(masked_q_values).item()
-                print(action)
         next_observation, reward, done, truncated, info = env.step(action)
         next_state, next_action_mask = next_observation
         next_state = torch.FloatTensor(next_state).to(device)  # Move the next state to the GPU

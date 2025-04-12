@@ -7,19 +7,19 @@ class CardGameEnv(gym.Env):
         super(CardGameEnv, self).__init__()
         
         # Define action space: 0 or 1 (binary)
-        self.action_space = gym.spaces.Discrete(60)  # 114 actions
+        self.action_space = gym.spaces.Discrete(20)  # 20 actions
         
         # Define observation space: 540-dimensional vector
         # Concatenation of 5 x 108
         self.observation_space = gym.spaces.Box(
-            low=0, high=1, shape=(270,), dtype=np.float32
+            low=0, high=1, shape=(42,), dtype=np.float32
         )
         
         # Your game logic object (replace with your actual game class/instance)
         self.game = Game()  # Replace with your game implementation
         self.current_player_turn = 0  # Assuming single-player for now
         self.step_count = 0
-        self.max_steps = 1000  # 1000 decisions per game
+        self.max_steps = 300  # 1000 decisions per game
         
     def reset(self, seed=None, options=None):
         # Reset the environment to the initial state
@@ -69,34 +69,54 @@ class CardGameEnv(gym.Env):
         dead_cards_vector = game_state["linear_encoding_discard_pile_not_top_X"][self.current_player_turn]  # Dead cards in discard pile
         opp_known_cards_vector = game_state["linear_encoding_players_known_cards"][1] # Opponent known cards
         cards_in_down_pile_vector = game_state["linear_encoding_all_down_cards"] 
-        action_mask_vector = game_state["action_mask"]
+        action_mask_vector = game_state["action_mask"] # Action mask is 0, 1 (Buy or discard), 2 - 5 (Amount of cards to buy), 6 - 114, card to discard
+        
+        player_hand_vector        = self._shape_observation_vector_ranks(player_hand_vector, True)
+        top_card_vector           = self._shape_observation_vector_ranks(top_card_vector, False)
+        cards_in_down_pile_vector = self._shape_observation_vector_ranks(cards_in_down_pile_vector, False)
 
-
-        # Reduce the action space from 108 * 5, to 56 * 5
-        player_hand_vector = [player_hand_vector[i] + player_hand_vector[i+54] for i in range(int(len(player_hand_vector)/2))]
-        top_card_vector = [top_card_vector[i] + top_card_vector[i+54] for i in range(int(len(top_card_vector)/2))]
-        dead_cards_vector = [dead_cards_vector[i] + dead_cards_vector[i+54] for i in range(int(len(dead_cards_vector)/2))]
-        opp_known_cards_vector = [opp_known_cards_vector[i] + opp_known_cards_vector[i+54] for i in range(int(len(opp_known_cards_vector)/2))]
-        cards_in_down_pile_vector = [cards_in_down_pile_vector[i] + cards_in_down_pile_vector[i+54] for i in range(int(len(cards_in_down_pile_vector)/2))]
-        action_mask_vector = action_mask_vector[0:6] + [min(action_mask_vector[i + 6] + action_mask_vector[i + 60], 1) for i in range(54)]
+        # Convert the action mask to keep the first 6 elements, but then translate 6-114, to just the rank representation of the cards
+        action_mask_first_elements = action_mask_vector[0:6]
+        action_mask_last_elements = self._shape_observation_vector_ranks(action_mask_vector[6:], False)
 
         # Convert to numpy arrays
         player_hand_vector = np.array(player_hand_vector, dtype=np.float32)
         top_card_vector = np.array(top_card_vector, dtype=np.float32)
-        dead_cards_vector = np.array(dead_cards_vector, dtype=np.float32)
-        opp_known_cards_vector = np.array(opp_known_cards_vector, dtype=np.float32)
         cards_in_down_pile_vector = np.array(cards_in_down_pile_vector, dtype=np.float32)
-        action_mask_vector = np.array(action_mask_vector, dtype=np.float32)
+        action_mask_vector = np.append(action_mask_first_elements, action_mask_last_elements)
 
         # Concatenate into a single 270-dimensional vector
         state = np.concatenate([
             player_hand_vector,
             top_card_vector,
-            dead_cards_vector,
-            opp_known_cards_vector,
             cards_in_down_pile_vector
         ])
         return (state.astype(np.float32), action_mask_vector)
+
+    # Returns a vector which only signifies rank and ignores suit
+    # If count, values can be 0(does not appear), 1/3 (appears once), 2/3 (appears twice), 1 (appears 3+ times)
+    # If not count, values can be 0 (does not appear), or 1 (does appear)
+    def _shape_observation_vector_ranks(self, vector, count) :
+
+        res = [0] * 14
+        for i, val in enumerate(vector) :
+            if val :
+                i = i % 54
+                if i == 0 or i == 1 :
+                    if count :
+                        res[0] = min(res[0] + (1/3), 1)
+                    else :
+                        res[0] = 1
+                    continue
+
+                if i < 2 or i > 53:
+                    raise ValueError("Input must be between 2 and 53 inclusive")
+                i = ((i - 2) // 4) + 1
+                if count :
+                    res[i] = min(res[i] + (1/3), 1)
+                else :
+                    res[i] = 1
+        return res
     
     def _compute_reward(self):
         # Only return the rewards at the end of the game 0 until then
@@ -112,7 +132,8 @@ class CardGameEnv(gym.Env):
 env = CardGameEnv()
 state, info = env.reset()
 print("Initial state shape:", state[0].shape)  # Should be (540,)
-
+action = env.action_space.sample()  # Random action (0 or 1)
+next_state, reward, done, truncated, info = env.step(action)
 '''
 done = False
 while not done:

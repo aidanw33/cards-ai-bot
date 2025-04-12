@@ -2,3 +2,4 @@ __pycache__*
 .DS_Store
 __pycache__*
 training_log.txt
+reward_plot.png

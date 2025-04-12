@@ -353,6 +353,7 @@ class Game:
             self.current_turn = 0
             current_player = self.players[self.current_turn]
             # 6) Player ends their turn discarding one card into the discard piles
+            '''
             hand = self.players[self.current_turn].get_hand()
             discard_card = None
             for card in hand :
@@ -361,7 +362,33 @@ class Game:
                     discard_card = card
                 elif index - 54 + 6 == action :
                     discard_card = card
+            '''
 
+            # Find which card to discard, rank of discard card is given, just discard the first card of rank X into pile
+            hand = self.players[self.current_turn].get_hand()
+            discard_card = None
+            discard_rank = None
+            if 6 <= action <= 14:
+                discard_rank =  str(action - 4)
+            elif action == 15:
+                discard_rank = "Jack"
+            elif action == 16:
+                discard_rank = "Queen"
+            elif action == 17:
+                discard_rank = "King"
+            elif action == 18:
+                discard_rank = "Ace"
+            elif action == 19:
+                discard_rank = "Joker"
+            else:
+                raise ValueError("Input must be between 6 and 19")
+            for card in hand :
+                rank = card.rank
+                if rank == discard_rank :
+                    discard_card = card
+                    break
+            if discard_card == None :
+                raise IndexError("No card found with matching rank")
             
             game_control.agent_player_discards_card_into_discard_pile_beta(self.players[self.current_turn], self.get_game_state(), self.deck, discard_card)
 
