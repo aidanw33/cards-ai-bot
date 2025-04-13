@@ -145,7 +145,7 @@ for episode in range(num_episodes):
     else :
         wins_per_episode.append(0)
 
-    epsilon = max(0.01, 1.0 - episode / 75000)
+    epsilon = max(0.01, 1.0 - episode / 10000)
 
     if episode % 50 == 0 or total_steps % 1000 == 0:
         target_net.load_state_dict(q_net.state_dict())
