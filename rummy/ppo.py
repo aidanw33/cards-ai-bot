@@ -54,15 +54,21 @@ entropy_coef = 0.01
 ppo_epochs = 10  # Number of optimization epochs per batch
 batch_size = 64  # Mini-batch size for PPO updates
 rewards_per_episode = []
+wins_per_episode = []
 
 # Plotting setup
-plt.ion()
-fig, ax = plt.subplots()
-x_data, y_data = [], []
-line, = ax.plot(x_data, y_data, marker='o', linestyle='-')
-ax.set_xlabel("Episode")
-ax.set_ylabel("Average Reward (per 100 episodes)")
-ax.grid()
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()  # Create a second y-axis sharing the same x-axis
+
+x_data, reward_data, winrate_data = [], [], []
+
+line1, = ax1.plot([], [], 'b-', label='Avg Reward')
+line2, = ax2.plot([], [], 'g--', label='Win Rate (last 100)')
+
+ax1.set_xlabel("Episode")
+ax1.set_ylabel("Average Reward", color='b')
+ax2.set_ylabel("Win Rate", color='g')
+ax1.grid()
 
 total_steps = 0
 for episode in range(num_episodes):
@@ -104,6 +110,13 @@ for episode in range(num_episodes):
         if done or truncated:
             break
     
+    # Track the wins
+    if info['Winner'] == 0 :
+        wins_per_episode.append(1)
+    else :
+        wins_per_episode.append(0)
+    print(wins_per_episode)
+
     # Compute returns and advantages using GAE
     returns = []
     advantages = []
@@ -177,18 +190,27 @@ for episode in range(num_episodes):
     rewards_per_episode.append(total_reward)
     
     # Update plot every 50 episodes
-    if episode % 50 == 0:
+    if episode % 50 == 0 and episode != 0:
         avg_reward = np.mean(rewards_per_episode[-100:]) if rewards_per_episode else 0
+        win_rate = np.mean(wins_per_episode[-100:]) if wins_per_episode else 0
+
         x_data.append(episode)
-        y_data.append(avg_reward)
-        line.set_xdata(x_data)
-        line.set_ydata(y_data)
-        ax.relim()
-        ax.autoscale_view()
+        reward_data.append(avg_reward)
+        winrate_data.append(win_rate)
+
+        line1.set_xdata(x_data)
+        line1.set_ydata(reward_data)
+
+        line2.set_xdata(x_data)
+        line2.set_ydata(winrate_data)
+
+        ax1.relim(); ax1.autoscale_view()
+        ax2.relim(); ax2.autoscale_view()
+
         plt.draw()
         plt.savefig("reward_plot.png")
         plt.pause(0.01)
-    
+            
     sys.stdout = original_stdout
     print(f"Episode {episode}, Reward: {total_reward:.2f}, Steps: {step+1}")
     sys.stdout = log_file

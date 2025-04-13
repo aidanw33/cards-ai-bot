@@ -58,7 +58,7 @@ class CardGameEnv(gym.Env):
         done = self.step_count >= self.max_steps or self.game.is_game_over
         
         # Info dict (optional, can include debug info)
-        info = {}
+        info = {"Winner": self.game.game_winner}
         
         return next_state, reward, done, False, info  # False is 'truncated' flag
     

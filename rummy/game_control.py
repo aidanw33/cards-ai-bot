@@ -242,15 +242,15 @@ def calculate_player_scores_shaped(players) :
     player_scores = [0] * len(players)
 
     for i, player in enumerate(players) :
-        player_score = 0
+        player_score = -1/2
         # If player is down, give them more of a reward based on how many cards they have left
         if player.get_is_player_down() :
             if len(player.get_hand()) == 0 :
-                player_scores[i] = 100
+                player_scores[i] = 0
                 continue
 
             player_score += (1/3)
-            player_score += (1/2) - ((len(player.get_hand()))/36)
+            player_score += (1/2) - (((len(player.get_hand()))/36) + (1/3))
             player_scores[i] = player_score
             continue
         ranks = {}

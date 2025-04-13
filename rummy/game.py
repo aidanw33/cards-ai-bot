@@ -18,6 +18,7 @@ class Game:
         self.action_draw_disc = 0
         self.print = False
         self.next_action = "deck/disc"
+        self.game_winner = None
         # Must be 6 players per game
         '''
         if len(player_names) != 6 :
@@ -193,6 +194,7 @@ class Game:
             # 7) If the player has no cards in their hand at the end of the round they have won the game
             if len(current_player.get_hand()) == 0:
                 self.is_game_over = True
+                self.game_winner = self.current_turn
                 if self.print :
                     print(f"{current_player.get_player_name()} has won the game!")
 
@@ -295,6 +297,7 @@ class Game:
             # 7) If the player has no cards in their hand at the end of the round they have won the game
             if len(current_player.get_hand()) == 0:
                 self.is_game_over = True
+                self.game_winner = self.current_turn
                 if self.print :
                     print(f"{current_player.get_player_name()} has won the game!")
 
@@ -319,7 +322,6 @@ class Game:
             print("Has", 3 - self.players[0].get_buys_used(), "buys left")
 
         if self.next_action == "deck/disc" :
-            
             self.current_turn = 0
             current_player = self.players[self.current_turn]
             # Print output identifying who's turn it is
@@ -391,6 +393,8 @@ class Game:
             # 7) If the player has no cards in their hand at the end of the round they have won the game
             if len(current_player.get_hand()) == 0:
                 self.is_game_over = True
+                self.game_winner = self.current_turn
+
                 if self.print :
                     print(f"{current_player.get_player_name()} has won the game!")
 
@@ -438,6 +442,7 @@ class Game:
                 # 7) If the player has no cards in their hand at the end of the round they have won the game
                 if len(current_player.get_hand()) == 0:
                     self.is_game_over = True
+                    self.game_winner = self.current_turn
                     if self.print :
                         print(f"{current_player.get_player_name()} has won the game!")
 
@@ -477,6 +482,7 @@ class Game:
             # 7) If the player has no cards in their hand at the end of the round they have won the game
             if len(current_player.get_hand()) == 0:
                 self.is_game_over = True
+                self.game_winner = self.current_turn
                 if self.print :
                     print(f"{current_player.get_player_name()} has won the game!")
 
