@@ -75,14 +75,15 @@ class Agent:
         return 0
 
     @staticmethod
-    def dumb_discard(game_state) :
+    def dumb_discard(current_player) :
         """
         This function decides which card to discard from the players hand.
         It will discard the first card it finds in the hand
         """
-        # Analyze the gamestate
-
+        # Choose a random card in the agents hand to discard
+        cards_in_hand = len(current_player.get_hand())
+        index_to_discard = random.randint(0, (cards_in_hand - 1))
 
         # Choose the card at index 0 to discard
-        card_to_discard = 0
-        return card_to_discard
+
+        return index_to_discard

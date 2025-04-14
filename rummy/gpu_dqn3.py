@@ -13,7 +13,7 @@ import sys
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 original_stdout = sys.stdout
-log_file = open("training_log_dqn.txt", "w")
+log_file = open("training_ouput/training_log_dqn.txt", "w")
 sys.stdout = log_file
 
 class QNetwork(nn.Module):
@@ -75,7 +75,7 @@ def update_plot(episode):
     ax2.relim(); ax2.autoscale_view()
 
     plt.draw()
-    plt.savefig("reward_plot_dqn.png")
+    plt.savefig("training_ouput/reward_plot_dqn.png")
     plt.pause(0.01)
 
 total_steps = 0

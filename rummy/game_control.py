@@ -113,7 +113,7 @@ def agent_player_discards_card_into_discard_pile(current_player, game_state, dec
 
     # Agent will discard a card in their hand
     # Input will be the game state, output will be the card that is being discarded
-    card_to_discard = Agent.dumb_discard(game_state)
+    card_to_discard = Agent.dumb_discard(current_player)
 
     player_hand = current_player.get_hand()
 
