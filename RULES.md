@@ -46,6 +46,7 @@ A turn proceeds in this fixed order:
 - A lay-off is placing one or more cards from your hand onto **any** down pile (your own or another player's) where the rank matches.
 - Cards are added one at a time; lay-offs do not need to come in triplets.
 - Wilds may be laid off as long as the destination pile does not already contain 2 wilds. (Wild lay-off behavior matters more in later rounds with runs; in Round 1 it is uncommon but legal.)
+- **You cannot lay off your final card.** Per §7, every turn ends with a discard, so you must keep at least one card in hand when laying off. (A lay-off action is only legal when your hand has 2 or more cards.) The path to going out is: lay off down to one card, then discard it.
 
 ## 7. Going Out
 
