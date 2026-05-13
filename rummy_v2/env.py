@@ -21,6 +21,7 @@ the AEC subset that PPO + self-play needs: `reset`, `step`, `last`, `observe`,
 from __future__ import annotations
 
 import random
+from dataclasses import replace
 from typing import Any
 
 import numpy as np
@@ -85,6 +86,18 @@ OBS_BUY_OFFER_DIM: int = NUM_PLAYERS  # 6
 # opponent is collecting (the strongest "they want this rank" signal short of
 # seeing their hand).
 OBS_OPPONENT_PICKUP_DIM: int = (NUM_PLAYERS - 1) * NUM_RANK_BUCKETS  # 70
+# Φ-features (potential-based reward shaping signals exposed as observation):
+#   - Φ_self: viewer's current hand_potential (in [0, 6]).
+#   - Φ_with_top: hand_potential if viewer added the discard top to hand
+#     (== Φ_self when top is None).
+#   - Φ_after_discard[k]: hand_potential if viewer discarded any one card
+#     from rank-bucket k (== Φ_self when bucket k is empty in hand).
+# These give the network the same internal signals `structured` uses for
+# its decisions, so BC reduces to argmax/threshold over obs slices instead
+# of having to re-derive Φ from raw rank counts through the MLP.
+OBS_PHI_SELF_DIM: int = 1
+OBS_PHI_WITH_TOP_DIM: int = 1
+OBS_PHI_AFTER_DISCARD_DIM: int = NUM_RANK_BUCKETS  # 14
 OBS_DIM: int = (
     OBS_HAND_DIM
     + OBS_DOWN_PILES_DIM
@@ -95,7 +108,10 @@ OBS_DIM: int = (
     + OBS_PILE_SIZES_DIM
     + OBS_BUY_OFFER_DIM
     + OBS_OPPONENT_PICKUP_DIM
-)  # 328
+    + OBS_PHI_SELF_DIM
+    + OBS_PHI_WITH_TOP_DIM
+    + OBS_PHI_AFTER_DISCARD_DIM
+)  # 344
 
 
 # --- Reward magnitudes (see ENV_DESIGN.md §5) ---------------------------------
@@ -115,9 +131,21 @@ REWARD_GOING_DOWN: float = 0.0
 REWARD_PER_LAYOFF: float = 0.0
 REWARD_GOING_DOWN_PER_POINT: float = 0.05
 REWARD_PER_LAYOFF_PER_POINT: float = 0.05
-REWARD_PER_BUY: float = -0.5
+# Buys are no longer flat-penalized; potential-based shaping (below) handles
+# the "good buy vs junk buy" distinction by responding to the actual hand
+# structure change. A buy that doesn't increase Φ (junk card + random deck
+# card) yields ~0 shaping reward; a buy that completes a near-set yields a
+# meaningful positive Φ change.
+REWARD_PER_BUY: float = 0.0
 REWARD_TERMINAL_WIN: float = 0.0
 REWARD_TERMINAL_HAND_POINT: float = -0.05
+
+# Potential-based reward shaping coefficient. Per Ng et al. (1999),
+# adding Φ(s') − Φ(s) to the per-step reward does not change the optimal
+# policy but provides a dense gradient signal toward set-construction.
+# `hand_potential` returns a value in [0, 6]; SHAPING_COEF * Δ is the
+# shaping reward per agent action.
+SHAPING_COEF: float = 0.1
 
 
 # --- Helpers ------------------------------------------------------------------
@@ -150,6 +178,75 @@ def _agent_seat(agent_id: str) -> int:
     return int(agent_id.split("_")[1])
 
 
+# --- Hand potential (reward shaping) -----------------------------------------
+
+
+def hand_potential(player: PlayerState) -> float:
+    """Closeness-to-going-down potential, in [0, 6].
+
+    Round 1 needs 2 sets of 3. We score by:
+      - Per-rank natural counts (capped at 3 — extras don't help) plus a
+        wild pool. A *set* requires a natural anchor; size 1 is a "stranded
+        anchor" and contributes 0 (a singleton is no closer to going down
+        than no card at all).
+      - Pick the top-2 rank counts as the two candidate-set anchors,
+        greedily allocating wilds (fill anchor1 to 3 first, then anchor2).
+        Each set scores its size (2 or 3) only if it reached size ≥ 2;
+        size-1 sets score 0.
+      - Optionality bonus: +0.5 per *additional* pair-or-better rank beyond
+        the two anchors. Three pairs gives more paths to going down than
+        two pairs (any of three ranks can complete you), and the bonus
+        captures that without making the third pair worth as much as
+        completing the first two anchors.
+      - Total is clipped to 6 (going-down readiness).
+
+    Once the player is down, Φ saturates at 6.0; lay-off shaping is handled
+    by REWARD_PER_LAYOFF_PER_POINT, so Φ has nothing further to track. This
+    also keeps the auto-go-down transition non-punishing (Φ is monotone
+    non-decreasing across the go-down boundary).
+    """
+    if player.is_down:
+        return 6.0
+
+    naturals: dict[Rank, int] = {}
+    wilds = 0
+    for c in player.hand:
+        if c.is_wild:
+            wilds += 1
+        else:
+            naturals[c.rank] = naturals.get(c.rank, 0) + 1
+
+    counts = sorted((min(c, 3) for c in naturals.values()), reverse=True)
+
+    if not counts:
+        # No naturals → no anchor → no legal set under standard rummy rules.
+        return 0.0
+
+    n1 = counts[0]
+    n2 = counts[1] if len(counts) >= 2 else 0
+
+    # Greedy wild allocation: fill s1 (top anchor) toward 3 first, then s2.
+    s1 = min(n1 + wilds, 3)
+    wilds_left = wilds - (s1 - n1)
+    s2 = min(n2 + wilds_left, 3) if n2 >= 1 else 0
+
+    # Singleton fix: a "set" of size 1 is a stranded anchor — contributes 0.
+    contrib1 = s1 if s1 >= 2 else 0
+    contrib2 = s2 if s2 >= 2 else 0
+    main = float(contrib1 + contrib2)
+
+    # Optionality bonus: pair-or-better ranks beyond the two used as anchors
+    # add a small in-tier nudge (more paths to completion) but must never
+    # push across a tier boundary. Tiers are spaced by 1.0 (4.0 = 2 pairs,
+    # 5.0 = triple + pair, 6.0 = ready), so cap the bonus at 0.75 — strictly
+    # less than 1.0 — so e.g. five pairs (4.0 + 0.75 = 4.75) never beats
+    # triple + pair (5.0).
+    extra_pairs = sum(1 for c in counts[2:] if c >= 2)
+    bonus = min(0.25 * float(extra_pairs), 0.75)
+
+    return min(main + bonus, 6.0)
+
+
 # --- Observation encoding -----------------------------------------------------
 
 
@@ -158,7 +255,7 @@ def encode_observation(
     viewer: int,
     last_pickup_rank: tuple[int | None, ...] | None = None,
 ) -> np.ndarray:
-    """Encode `state` into a 328-dim float32 vector from `viewer`'s POV.
+    """Encode `state` into a 344-dim float32 vector from `viewer`'s POV.
 
     Player indices in the observation are rotated so that `viewer` is obs-seat
     0 and subsequent seats follow turn order. Hand-content is only filled for
@@ -240,6 +337,38 @@ def encode_observation(
                 base = cursor + (offset - 1) * NUM_RANK_BUCKETS
                 obs[base + rank_idx] = 1.0
     cursor += OBS_OPPONENT_PICKUP_DIM
+
+    # 9. Φ-features for the viewer (gives the network the same signals
+    # `structured` uses; see OBS_PHI_*_DIM comments for layout).
+    viewer_player = state.players[viewer]
+    phi_self = hand_potential(viewer_player)
+    obs[cursor] = phi_self
+    cursor += OBS_PHI_SELF_DIM
+
+    if top is not None:
+        with_top = replace(viewer_player, hand=viewer_player.hand + (top,))
+        obs[cursor] = hand_potential(with_top)
+    else:
+        obs[cursor] = phi_self
+    cursor += OBS_PHI_WITH_TOP_DIM
+
+    # For each rank-bucket: Φ if viewer discarded any one card from that
+    # bucket. If the bucket is empty in hand, defaults to Φ_self (no change).
+    bucket_first_card: dict[int, Card] = {}
+    for c in viewer_player.hand:
+        bucket = card_to_rank_idx(c)
+        if bucket not in bucket_first_card:
+            bucket_first_card[bucket] = c
+    for bucket in range(NUM_RANK_BUCKETS):
+        card_to_remove = bucket_first_card.get(bucket)
+        if card_to_remove is None:
+            obs[cursor + bucket] = phi_self
+        else:
+            new_hand = list(viewer_player.hand)
+            new_hand.remove(card_to_remove)
+            hyp = replace(viewer_player, hand=tuple(new_hand))
+            obs[cursor + bucket] = hand_potential(hyp)
+    cursor += OBS_PHI_AFTER_DISCARD_DIM
 
     assert cursor == OBS_DIM
     return obs
@@ -526,6 +655,12 @@ class SpeedRummyEnv:
                 f"action {action} not legal in phase {self._state.phase.name}"
             )
 
+        # Capture Φ before the action — only the acting agent's hand can
+        # change this step, so we only need their potential. (PassBuy /
+        # actions on already-down players give Δ=0 trivially.)
+        acting_seat = _agent_seat(agent)
+        phi_before = hand_potential(self._state.players[acting_seat])
+
         # Per-step idle penalty (now 0 by default — kept as a hook).
         self.rewards[agent] += REWARD_PER_STEP
         if isinstance(engine_action, Buy):
@@ -556,6 +691,11 @@ class SpeedRummyEnv:
 
         # Auto go-down for the active player if newly possible.
         self._maybe_auto_go_down()
+
+        # Potential-based shaping: reward the change in Φ for the acting
+        # agent's hand across this step. Optimal-policy-preserving (Ng 1999).
+        phi_after = hand_potential(self._state.players[acting_seat])
+        self.rewards[agent] += SHAPING_COEF * (phi_after - phi_before)
 
         # Terminal handling.
         if self._state.phase is Phase.ROUND_OVER:

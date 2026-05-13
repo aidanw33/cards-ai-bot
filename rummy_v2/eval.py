@@ -29,13 +29,22 @@ from __future__ import annotations
 
 import argparse
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Callable
 
 import numpy as np
 
-from rummy_v2.actions import Discard
-from rummy_v2.env import SpeedRummyEnv, engine_action_to_flat
+from rummy_v2.actions import Buy, Discard, LayOff, is_legal, legal_actions
+from rummy_v2.env import (
+    ACTION_BUY,
+    ACTION_DRAW_DECK,
+    ACTION_DRAW_DISCARD,
+    ACTION_PASS_BUY,
+    SpeedRummyEnv,
+    card_to_rank_idx,
+    engine_action_to_flat,
+    hand_potential,
+)
 from rummy_v2.random_play import random_action as _progress_random_action
 from rummy_v2.state import NUM_PLAYERS, Phase
 
@@ -72,10 +81,83 @@ def greedy_policy(env: SpeedRummyEnv, rng: random.Random) -> int:
     return engine_action_to_flat(state, action)
 
 
+def structured_policy(env: SpeedRummyEnv, rng: random.Random) -> int:
+    """Φ-aware heuristic that reasons about own hand structure.
+
+    Improvements over `progress`/`greedy`:
+      - Take discard top iff Φ(hand ∪ {top}) > Φ(hand)  — i.e. the top
+        actively helps build a near-set, not just whether it matches a pile.
+      - Buy iff ΔΦ from the discard top alone ≥ 1.0 — saves buy slots for
+        cards that materially advance a near-set (turns 2 → 3, or 1+wild → 3).
+      - Discard the rank whose removal causes the smallest Φ drop, with
+        highest-point-value tiebreak (dump high cards when structurally
+        equivalent — same logic as `greedy` but only after the Φ tiebreak).
+      - Lay-off greedily (per-action cumulative; engine handles repeats).
+
+    This is intentionally blind to opponents and the discard pile history:
+    those signals are left for PPO to learn on top of a strong structural
+    floor.
+    """
+    state = env._state
+
+    if state.phase is Phase.AWAITING_DRAW:
+        actor = state.players[state.active_player]
+        top = state.top_discard
+        if top is not None:
+            phi_now = hand_potential(actor)
+            phi_with = hand_potential(replace(actor, hand=actor.hand + (top,)))
+            if phi_with > phi_now:
+                return ACTION_DRAW_DISCARD
+        return ACTION_DRAW_DECK
+
+    if state.phase is Phase.BUY_CASCADE:
+        if not is_legal(state, Buy()):
+            return ACTION_PASS_BUY
+        buyer = state.players[state.buy_offer_to]
+        top = state.top_discard
+        if top is None:
+            return ACTION_PASS_BUY
+        phi_now = hand_potential(buyer)
+        phi_with = hand_potential(replace(buyer, hand=buyer.hand + (top,)))
+        if phi_with - phi_now >= 1.0:
+            return ACTION_BUY
+        return ACTION_PASS_BUY
+
+    # POST_DRAW: lay off greedily, else pick best discard.
+    actor = state.players[state.active_player]
+    legal = legal_actions(state)
+
+    lay_offs = [a for a in legal if isinstance(a, LayOff)]
+    if lay_offs:
+        return engine_action_to_flat(state, rng.choice(lay_offs))
+
+    best_phi = -1.0
+    best_pts = -1
+    best_action: Discard | None = None
+    seen_buckets: set[int] = set()
+    for c in actor.hand:
+        bucket = card_to_rank_idx(c)
+        if bucket in seen_buckets:
+            continue
+        seen_buckets.add(bucket)
+        new_hand = list(actor.hand)
+        new_hand.remove(c)
+        phi_after = hand_potential(replace(actor, hand=tuple(new_hand)))
+        pv = c.point_value
+        if phi_after > best_phi or (phi_after == best_phi and pv > best_pts):
+            best_phi = phi_after
+            best_pts = pv
+            best_action = Discard(card=c)
+
+    assert best_action is not None
+    return engine_action_to_flat(state, best_action)
+
+
 POLICIES: dict[str, Policy] = {
     "uniform": uniform_policy,
     "progress": progress_policy,
     "greedy": greedy_policy,
+    "structured": structured_policy,
 }
 
 

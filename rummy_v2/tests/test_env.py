@@ -79,11 +79,12 @@ class TestShapes:
     def test_action_space_is_186(self) -> None:
         assert ACTION_SPACE_SIZE == 186
 
-    def test_obs_dim_is_328(self) -> None:
+    def test_obs_dim_is_344(self) -> None:
         # 14 hand + 180 down piles + 14 discard top + 14 discard history
         # + 24 player meta + 4 phase + 2 pile sizes + 6 buy offer
-        # + 70 opponent-pickup = 328
-        assert OBS_DIM == 328
+        # + 70 opponent-pickup + 1 Φ_self + 1 Φ_with_top
+        # + 14 Φ_after_discard = 344
+        assert OBS_DIM == 344
 
     def test_reset_observation_shape(self) -> None:
         env = SpeedRummyEnv(seed=0)
@@ -155,7 +156,8 @@ class TestDiscardHistoryFeature:
         assert history.sum() == 0.0
 
     def test_pickup_offset_is_after_buy_offer(self) -> None:
-        """Sanity-check: opponent-pickup section sits at the very end of obs."""
+        """Sanity-check: opponent-pickup section follows the buy-offer section.
+        (Φ-features come after pickup, so pickup is no longer at OBS_DIM end.)"""
         expected_offset = (
             OBS_HAND_DIM
             + OBS_DOWN_PILES_DIM
@@ -166,7 +168,20 @@ class TestDiscardHistoryFeature:
             + OBS_PILE_SIZES_DIM
             + OBS_BUY_OFFER_DIM
         )
-        assert expected_offset + OBS_OPPONENT_PICKUP_DIM == OBS_DIM
+        # Pickup section starts at expected_offset; Φ-features come after.
+        from rummy_v2.env import (
+            OBS_PHI_AFTER_DISCARD_DIM,
+            OBS_PHI_SELF_DIM,
+            OBS_PHI_WITH_TOP_DIM,
+        )
+        assert (
+            expected_offset
+            + OBS_OPPONENT_PICKUP_DIM
+            + OBS_PHI_SELF_DIM
+            + OBS_PHI_WITH_TOP_DIM
+            + OBS_PHI_AFTER_DISCARD_DIM
+            == OBS_DIM
+        )
 
     def test_history_grows_monotonically_within_episode(self) -> None:
         """Discard pile only grows (until reshuffle); per-rank history sum
@@ -199,7 +214,18 @@ class TestDiscardHistoryFeature:
 class TestOpponentPickupFeature:
     """Verify the per-opponent last-discard-pickup feature."""
 
-    PICKUP_OFFSET = OBS_DIM - OBS_OPPONENT_PICKUP_DIM
+    # Pickup section starts after buy-offer; the Φ-features that follow
+    # don't affect this offset.
+    PICKUP_OFFSET = (
+        OBS_HAND_DIM
+        + OBS_DOWN_PILES_DIM
+        + OBS_DISCARD_TOP_DIM
+        + OBS_DISCARD_HISTORY_DIM
+        + OBS_PLAYERS_DIM
+        + OBS_PHASE_DIM
+        + OBS_PILE_SIZES_DIM
+        + OBS_BUY_OFFER_DIM
+    )
 
     def _slot(self, viewer_seat: int, target_seat: int, rank_idx: int) -> int:
         offset = (target_seat - viewer_seat) % NUM_PLAYERS
